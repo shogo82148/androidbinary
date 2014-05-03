@@ -124,6 +124,11 @@ type ResValue struct {
 	Data     uint32
 }
 
+type ResXMLTreeEndElementExt struct {
+	NS   ResStringPoolRef
+	Name ResStringPoolRef
+}
+
 func NewFile(r io.ReaderAt) (*File, error) {
 	f := new(File)
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
@@ -148,6 +153,8 @@ func NewFile(r io.ReaderAt) (*File, error) {
 			err = f.ReadStartNamespace(chunkReader)
 		case RES_XML_START_ELEMENT_TYPE:
 			err = f.ReadStartElement(chunkReader)
+		case RES_XML_END_ELEMENT_TYPE:
+			err = f.ReadEndElement(chunkReader)
 		default:
 			fmt.Println(chunkHeader.Type)
 		}
@@ -273,6 +280,24 @@ func (f *File) ReadStartElement(sr *io.SectionReader) error {
 		binary.Read(sr, binary.LittleEndian, attr)
 		fmt.Println(f.GetString(attr.Name), f.GetString(attr.RawValue))
 		offset += int64(attrExt.AttributeSize)
+	}
+	return nil
+}
+
+func (f *File) ReadEndElement(sr *io.SectionReader) error {
+	header := new(ResXMLTreeNode)
+	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
+		return err
+	}
+	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	ext := new(ResXMLTreeEndElementExt)
+	if err := binary.Read(sr, binary.LittleEndian, ext); err != nil {
+		return err
+	}
+	if ext.NS != NilResStringPoolRef {
+		fmt.Printf("</%s:%s>\n", f.GetString(ext.NS), f.GetString(ext.Name))
+	} else {
+		fmt.Printf("</%s>\n", f.GetString(ext.Name))
 	}
 	return nil
 }
