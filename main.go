@@ -9,7 +9,8 @@ import (
 )
 
 type File struct {
-	hoge int
+	StringPool  *ResStringPool
+	ResourceMap []uint32
 }
 
 const (
@@ -74,14 +75,18 @@ func NewFile(r io.ReaderAt) (*File, error) {
 		chunkHeader := &ResChunkHeader{}
 		binary.Read(sr, binary.LittleEndian, chunkHeader)
 
+		var err error
 		chunkReader := io.NewSectionReader(r, int64(offset), int64(chunkHeader.Size))
 		switch chunkHeader.Type {
 		case RES_STRING_POOL_TYPE:
-			fmt.Println(ReadStringPool(chunkReader))
+			f.StringPool, err = ReadStringPool(chunkReader)
 		case RES_XML_RESOURCE_MAP_TYPE:
-			fmt.Println("RES_XML_RESOURCE_MAP_TYPE")
+			f.ResourceMap, err = ReadResourceMap(chunkReader)
 		default:
 			fmt.Println(chunkHeader.Type)
+		}
+		if err != nil {
+			return nil, err
 		}
 
 		offset += chunkHeader.Size
@@ -157,7 +162,19 @@ func ReadUTF8(sr *io.SectionReader, offset int64) (string, error) {
 	return string(buf), nil
 }
 
+func ReadResourceMap(sr *io.SectionReader) ([]uint32, error) {
+	header := new(ResChunkHeader)
+	binary.Read(sr, binary.LittleEndian, header)
+	count := (header.Size - uint32(header.HeaderSize)) / 4
+	fmt.Println(header.Size, header.HeaderSize, count)
+	resourceMap := make([]uint32, count)
+	if err := binary.Read(sr, binary.LittleEndian, resourceMap); err != nil {
+		return nil, err
+	}
+	return resourceMap, nil
+}
+
 func main() {
 	f, _ := os.Open("AndroidManifest.xml")
-	NewFile(f)
+	fmt.Println(NewFile(f))
 }
