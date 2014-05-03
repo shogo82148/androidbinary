@@ -155,8 +155,6 @@ func NewFile(r io.ReaderAt) (*File, error) {
 			err = f.ReadStartElement(chunkReader)
 		case RES_XML_END_ELEMENT_TYPE:
 			err = f.ReadEndElement(chunkReader)
-		default:
-			fmt.Println(chunkHeader.Type)
 		}
 		if err != nil {
 			return nil, err
