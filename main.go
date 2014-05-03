@@ -11,6 +11,7 @@ import (
 type File struct {
 	StringPool  *ResStringPool
 	ResourceMap []uint32
+	Namespace   *ResXMLTreeNamespaceExt
 }
 
 const (
@@ -47,6 +48,10 @@ type ResChunkHeader struct {
 const SORTED_FLAG = 1 << 0
 const UTF8_FLAG = 1 << 8
 
+type ResStringPoolRef uint32
+
+const NilResStringPoolRef = ResStringPoolRef(0xFFFFFFFF)
+
 type ResStringPoolHeader struct {
 	Header      ResChunkHeader
 	StringCount uint32
@@ -60,6 +65,17 @@ type ResStringPool struct {
 	Header  ResStringPoolHeader
 	Strings []string
 	Styles  []string
+}
+
+type ResXMLTreeNode struct {
+	Header     ResChunkHeader
+	LineNumber uint32
+	Comment    ResStringPoolRef
+}
+
+type ResXMLTreeNamespaceExt struct {
+	Prefix ResStringPoolRef
+	Uri    ResStringPoolRef
 }
 
 func NewFile(r io.ReaderAt) (*File, error) {
@@ -82,6 +98,8 @@ func NewFile(r io.ReaderAt) (*File, error) {
 			f.StringPool, err = ReadStringPool(chunkReader)
 		case RES_XML_RESOURCE_MAP_TYPE:
 			f.ResourceMap, err = ReadResourceMap(chunkReader)
+		case RES_XML_START_NAMESPACE_TYPE:
+			err = f.ReadStartNamespace(chunkReader)
 		default:
 			fmt.Println(chunkHeader.Type)
 		}
@@ -92,6 +110,10 @@ func NewFile(r io.ReaderAt) (*File, error) {
 		offset += chunkHeader.Size
 	}
 	return f, nil
+}
+
+func (f *File) GetString(ref ResStringPoolRef) string {
+	return f.StringPool.Strings[int(ref)]
 }
 
 func ReadStringPool(sr *io.SectionReader) (*ResStringPool, error) {
@@ -172,6 +194,16 @@ func ReadResourceMap(sr *io.SectionReader) ([]uint32, error) {
 		return nil, err
 	}
 	return resourceMap, nil
+}
+
+func (f *File) ReadStartNamespace(sr *io.SectionReader) error {
+	header := new(ResXMLTreeNode)
+	binary.Read(sr, binary.LittleEndian, header)
+	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	namespace := new(ResXMLTreeNamespaceExt)
+	binary.Read(sr, binary.LittleEndian, namespace)
+	f.Namespace = namespace
+	return nil
 }
 
 func main() {
