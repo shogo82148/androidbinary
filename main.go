@@ -78,6 +78,52 @@ type ResXMLTreeNamespaceExt struct {
 	Uri    ResStringPoolRef
 }
 
+type ResXMLTreeAttrExt struct {
+	NS             ResStringPoolRef
+	Name           ResStringPoolRef
+	AttributeStart uint16
+	AttributeSize  uint16
+	AttributeCount uint16
+	IdIndex        uint16
+	ClassIndex     uint16
+	StyleIndex     uint16
+}
+
+type ResXMLTreeAttribute struct {
+	NS         ResStringPoolRef
+	Name       ResStringPoolRef
+	RawValue   ResStringPoolRef
+	TypedValue ResValue
+}
+
+const (
+	TYPE_NULL            = 0x00
+	TYPE_REFERENCE       = 0x01
+	TYPE_ATTRIBUTE       = 0x02
+	TYPE_STRING          = 0x03
+	TYPE_FLOAT           = 0x04
+	TYPE_DIMENSION       = 0x05
+	TYPE_FRACTION        = 0x06
+	TYPE_FIRST_INT       = 0x10
+	TYPE_INT_DEC         = 0x10
+	TYPE_INT_HEX         = 0x11
+	TYPE_INT_BOOLEAN     = 0x12
+	TYPE_FIRST_COLOR_INT = 0x1c
+	TYPE_INT_COLOR_ARGB8 = 0x1c
+	TYPE_INT_COLOR_RGB8  = 0x1d
+	TYPE_INT_COLOR_ARGB4 = 0x1e
+	TYPE_INT_COLOR_RGB4  = 0x1f
+	TYPE_LAST_COLOR_INT  = 0x1f
+	TYPE_LAST_INT        = 0x1f
+)
+
+type ResValue struct {
+	Size     uint16
+	Res0     uint8
+	DataType uint8
+	Data     uint32
+}
+
 func NewFile(r io.ReaderAt) (*File, error) {
 	f := new(File)
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
@@ -100,6 +146,8 @@ func NewFile(r io.ReaderAt) (*File, error) {
 			f.ResourceMap, err = ReadResourceMap(chunkReader)
 		case RES_XML_START_NAMESPACE_TYPE:
 			err = f.ReadStartNamespace(chunkReader)
+		case RES_XML_START_ELEMENT_TYPE:
+			err = f.ReadStartElement(chunkReader)
 		default:
 			fmt.Println(chunkHeader.Type)
 		}
@@ -113,6 +161,9 @@ func NewFile(r io.ReaderAt) (*File, error) {
 }
 
 func (f *File) GetString(ref ResStringPoolRef) string {
+	if ref == NilResStringPoolRef {
+		return ""
+	}
 	return f.StringPool.Strings[int(ref)]
 }
 
@@ -203,6 +254,26 @@ func (f *File) ReadStartNamespace(sr *io.SectionReader) error {
 	namespace := new(ResXMLTreeNamespaceExt)
 	binary.Read(sr, binary.LittleEndian, namespace)
 	f.Namespace = namespace
+	return nil
+}
+
+func (f *File) ReadStartElement(sr *io.SectionReader) error {
+	header := new(ResXMLTreeNode)
+	binary.Read(sr, binary.LittleEndian, header)
+	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	attrExt := new(ResXMLTreeAttrExt)
+	binary.Read(sr, binary.LittleEndian, attrExt)
+
+	fmt.Println(f.GetString(attrExt.Name))
+
+	offset := int64(attrExt.AttributeStart + header.Header.HeaderSize)
+	for i := 0; i < int(attrExt.AttributeCount); i++ {
+		sr.Seek(offset, os.SEEK_SET)
+		attr := new(ResXMLTreeAttribute)
+		binary.Read(sr, binary.LittleEndian, attr)
+		fmt.Println(f.GetString(attr.Name), f.GetString(attr.RawValue))
+		offset += int64(attrExt.AttributeSize)
+	}
 	return nil
 }
 
