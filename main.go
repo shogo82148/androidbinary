@@ -16,7 +16,7 @@ type File struct {
 	notPrecessedNS map[ResStringPoolRef]ResStringPoolRef
 	namespaces     map[ResStringPoolRef]ResStringPoolRef
 	XMLBuffer      bytes.Buffer
-	tablePackage   TablePackage
+	tablePackages  []TablePackage
 }
 
 const (
@@ -153,6 +153,7 @@ type TablePackage struct {
 	Header      ResTablePackage
 	TypeStrings *ResStringPool
 	KeyStrings  *ResStringPool
+	TableTypes  []*TableType
 }
 
 type ResTableType struct {
@@ -176,10 +177,29 @@ type ResTableConfig struct {
 	ScreenConfig uint32
 }
 
+type TableType struct {
+	Header  *ResTableType
+	Entries []TableEntry
+}
+
 type ResTableEntry struct {
 	Size  uint16
 	Flags uint16
 	Key   ResStringPoolRef
+}
+
+type TableEntry struct {
+	Key   *ResTableEntry
+	Value *ResValue
+	Flags uint32
+}
+
+type ResTableTypeSpec struct {
+	Header     ResChunkHeader
+	Id         uint8
+	Res0       uint8
+	Res1       uint16
+	EntryCount uint32
 }
 
 func NewFile(r io.ReaderAt) (*File, error) {
@@ -197,6 +217,7 @@ func (f *File) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 	}
 
 	var err error
+	numTablePackages := 0
 	sr.Seek(0, os.SEEK_SET)
 	switch chunkHeader.Type {
 	case RES_TABLE_TYPE:
@@ -216,9 +237,10 @@ func (f *File) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 	case RES_XML_END_ELEMENT_TYPE:
 		err = f.ReadEndElement(sr)
 	case RES_TABLE_PACKAGE_TYPE:
-		err = f.ReadTablePackage(sr)
-	case RES_TABLE_TYPE_TYPE:
-		err = f.ReadTableType(sr)
+		var tablePackage *TablePackage
+		tablePackage, err = ReadTablePackage(sr)
+		f.tablePackages[numTablePackages] = *tablePackage
+		numTablePackages++
 	}
 	if err != nil {
 		return nil, err
@@ -230,6 +252,8 @@ func (f *File) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 func (f *File) readTable(sr *io.SectionReader) error {
 	header := new(ResTableHeader)
 	binary.Read(sr, binary.LittleEndian, header)
+	f.tablePackages = make([]TablePackage, header.PackageCount)
+
 	offset := int64(header.Header.HeaderSize)
 	for offset < int64(header.Header.Size) {
 		chunkHeader, err := f.readChunk(sr, offset)
@@ -479,66 +503,99 @@ func (f *File) AddNamespace(ns, name ResStringPoolRef) string {
 	}
 }
 
-func (f *File) ReadTablePackage(sr *io.SectionReader) error {
+func ReadTablePackage(sr *io.SectionReader) (*TablePackage, error) {
+	tablePackage := new(TablePackage)
 	header := new(ResTablePackage)
 	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
-		return err
+		return nil, err
 	}
-	f.tablePackage.Header = *header
 
 	srTypes := io.NewSectionReader(sr, int64(header.TypeStrings), int64(header.Header.Size-header.TypeStrings))
 	if typeStrings, err := ReadStringPool(srTypes); err == nil {
-		f.tablePackage.TypeStrings = typeStrings
+		tablePackage.TypeStrings = typeStrings
 	} else {
-		return err
+		return nil, err
 	}
 
 	srKeys := io.NewSectionReader(sr, int64(header.KeyStrings), int64(header.Header.Size-header.KeyStrings))
 	if keyStrings, err := ReadStringPool(srKeys); err == nil {
-		f.tablePackage.KeyStrings = keyStrings
+		tablePackage.KeyStrings = keyStrings
 	} else {
-		return err
+		return nil, err
 	}
 
 	offset := int64(header.Header.HeaderSize)
 	for offset < int64(header.Header.Size) {
-		chunkHeader, err := f.readChunk(sr, offset)
+		chunkHeader := &ResChunkHeader{}
+		sr.Seek(offset, os.SEEK_SET)
+		if err := binary.Read(sr, binary.LittleEndian, chunkHeader); err != nil {
+			return nil, err
+		}
+
+		var err error
+		chunkReader := io.NewSectionReader(sr, offset, int64(chunkHeader.Size))
+		sr.Seek(offset, os.SEEK_SET)
+		switch chunkHeader.Type {
+		case RES_TABLE_TYPE_TYPE:
+			var tableType *TableType
+			tableType, err = ReadTableType(chunkReader)
+			tablePackage.TableTypes = append(tablePackage.TableTypes, tableType)
+		case RES_TABLE_TYPE_SPEC_TYPE:
+			_, err = ReadTableTypeSpec(chunkReader)
+		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 		offset += int64(chunkHeader.Size)
 	}
 
-	return nil
+	return tablePackage, nil
 }
 
-func (f *File) ReadTableType(sr *io.SectionReader) error {
+func ReadTableType(sr *io.SectionReader) (*TableType, error) {
 	header := new(ResTableType)
 	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Println(header)
 
 	entryIndexes := make([]uint32, header.EntryCount)
 	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
 	if err := binary.Read(sr, binary.LittleEndian, entryIndexes); err != nil {
-		return err
+		return nil, err
 	}
 
-	for _, index := range entryIndexes {
+	entries := make([]TableEntry, header.EntryCount)
+	for i, index := range entryIndexes {
 		if index == 0xFFFFFFFF {
 			continue
 		}
 		sr.Seek(int64(header.EntriesStart+index), os.SEEK_SET)
 		var key ResTableEntry
 		binary.Read(sr, binary.LittleEndian, &key)
+		entries[i].Key = &key
 
 		var val ResValue
 		binary.Read(sr, binary.LittleEndian, &val)
-		fmt.Println(f.GetString(key.Key), val)
-
+		entries[i].Value = &val
 	}
-	return nil
+	return &TableType{
+		header,
+		entries,
+	}, nil
+}
+
+func ReadTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
+	header := new(ResTableTypeSpec)
+	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
+		return nil, err
+	}
+
+	flags := make([]uint32, header.EntryCount)
+	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if err := binary.Read(sr, binary.LittleEndian, flags); err != nil {
+		return nil, err
+	}
+	return flags, nil
 }
 
 func main() {
