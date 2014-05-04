@@ -10,8 +10,8 @@ import (
 )
 
 type File struct {
-	StringPool  *ResStringPool
-	ResourceMap []uint32
+	stringPool  *ResStringPool
+	resourceMap []uint32
 	Namespace   *ResXMLTreeNamespaceExt
 	XMLBuffer   bytes.Buffer
 }
@@ -148,9 +148,9 @@ func NewFile(r io.ReaderAt) (*File, error) {
 		chunkReader := io.NewSectionReader(r, int64(offset), int64(chunkHeader.Size))
 		switch chunkHeader.Type {
 		case RES_STRING_POOL_TYPE:
-			f.StringPool, err = ReadStringPool(chunkReader)
+			f.stringPool, err = ReadStringPool(chunkReader)
 		case RES_XML_RESOURCE_MAP_TYPE:
-			f.ResourceMap, err = ReadResourceMap(chunkReader)
+			f.resourceMap, err = ReadResourceMap(chunkReader)
 		case RES_XML_START_NAMESPACE_TYPE:
 			err = f.ReadStartNamespace(chunkReader)
 		case RES_XML_START_ELEMENT_TYPE:
@@ -171,7 +171,7 @@ func (f *File) GetString(ref ResStringPoolRef) string {
 	if ref == NilResStringPoolRef {
 		return ""
 	}
-	return f.StringPool.Strings[int(ref)]
+	return f.stringPool.Strings[int(ref)]
 }
 
 func ReadStringPool(sr *io.SectionReader) (*ResStringPool, error) {
