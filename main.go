@@ -135,41 +135,57 @@ type ResXMLTreeEndElementExt struct {
 
 func NewFile(r io.ReaderAt) (*File, error) {
 	f := new(File)
+	f.readChunk(r, 0)
+	return f, nil
+}
+
+func (f *File) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
+	sr := io.NewSectionReader(r, offset, 1<<63-1-offset)
+	chunkHeader := &ResChunkHeader{}
+	sr.Seek(0, os.SEEK_SET)
+	if err := binary.Read(sr, binary.LittleEndian, chunkHeader); err != nil {
+		return nil, err
+	}
+
+	var err error
+	sr.Seek(0, os.SEEK_SET)
+	switch chunkHeader.Type {
+	case RES_XML_TYPE:
+		err = f.readXML(sr)
+	case RES_STRING_POOL_TYPE:
+		f.stringPool, err = ReadStringPool(sr)
+	case RES_XML_RESOURCE_MAP_TYPE:
+		f.resourceMap, err = ReadResourceMap(sr)
+	case RES_XML_START_NAMESPACE_TYPE:
+		err = f.ReadStartNamespace(sr)
+	case RES_XML_END_NAMESPACE_TYPE:
+		err = f.ReadEndNamespace(sr)
+	case RES_XML_START_ELEMENT_TYPE:
+		err = f.ReadStartElement(sr)
+	case RES_XML_END_ELEMENT_TYPE:
+		err = f.ReadEndElement(sr)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return chunkHeader, nil
+}
+
+func (f *File) readXML(sr *io.SectionReader) error {
 	fmt.Fprintf(&f.XMLBuffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
-	sr := io.NewSectionReader(r, 0, 1<<63-1)
 
 	header := new(ResChunkHeader)
 	binary.Read(sr, binary.LittleEndian, header)
-	offset := uint32(header.HeaderSize)
-
-	for offset < header.Size {
-		sr.Seek(int64(offset), os.SEEK_SET)
-		chunkHeader := &ResChunkHeader{}
-		binary.Read(sr, binary.LittleEndian, chunkHeader)
-
-		var err error
-		chunkReader := io.NewSectionReader(r, int64(offset), int64(chunkHeader.Size))
-		switch chunkHeader.Type {
-		case RES_STRING_POOL_TYPE:
-			f.stringPool, err = ReadStringPool(chunkReader)
-		case RES_XML_RESOURCE_MAP_TYPE:
-			f.resourceMap, err = ReadResourceMap(chunkReader)
-		case RES_XML_START_NAMESPACE_TYPE:
-			err = f.ReadStartNamespace(chunkReader)
-		case RES_XML_END_NAMESPACE_TYPE:
-			err = f.ReadEndNamespace(chunkReader)
-		case RES_XML_START_ELEMENT_TYPE:
-			err = f.ReadStartElement(chunkReader)
-		case RES_XML_END_ELEMENT_TYPE:
-			err = f.ReadEndElement(chunkReader)
-		}
+	offset := int64(header.HeaderSize)
+	for offset < int64(header.Size) {
+		chunkHeader, err := f.readChunk(sr, offset)
 		if err != nil {
-			return nil, err
+			return err
 		}
-
-		offset += chunkHeader.Size
+		offset += int64(chunkHeader.Size)
 	}
-	return f, nil
+	return nil
 }
 
 func (f *File) GetString(ref ResStringPoolRef) string {
