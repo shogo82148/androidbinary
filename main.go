@@ -140,6 +140,8 @@ func NewFile(r io.ReaderAt) (*File, error) {
 	binary.Read(sr, binary.LittleEndian, header)
 	offset := uint32(header.HeaderSize)
 
+	fmt.Fprintf(&f.XMLBuffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
+
 	for offset < header.Size {
 		sr.Seek(int64(offset), os.SEEK_SET)
 		chunkHeader := &ResChunkHeader{}
