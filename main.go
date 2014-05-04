@@ -13,7 +13,7 @@ type File struct {
 	StringPool  *ResStringPool
 	ResourceMap []uint32
 	Namespace   *ResXMLTreeNamespaceExt
-	buffer      bytes.Buffer
+	XMLBuffer   bytes.Buffer
 }
 
 const (
@@ -270,7 +270,7 @@ func (f *File) ReadStartElement(sr *io.SectionReader) error {
 	ext := new(ResXMLTreeAttrExt)
 	binary.Read(sr, binary.LittleEndian, ext)
 
-	fmt.Fprintf(&f.buffer, "<%s", f.AddNamespace(ext.NS, ext.Name))
+	fmt.Fprintf(&f.XMLBuffer, "<%s", f.AddNamespace(ext.NS, ext.Name))
 
 	offset := int64(ext.AttributeStart + header.Header.HeaderSize)
 	for i := 0; i < int(ext.AttributeCount); i++ {
@@ -303,10 +303,10 @@ func (f *File) ReadStartElement(sr *io.SectionReader) error {
 			}
 		}
 
-		fmt.Fprintf(&f.buffer, " %s=\"%s\"", f.AddNamespace(attr.NS, attr.Name), value)
+		fmt.Fprintf(&f.XMLBuffer, " %s=\"%s\"", f.AddNamespace(attr.NS, attr.Name), value)
 		offset += int64(ext.AttributeSize)
 	}
-	fmt.Fprint(&f.buffer, ">")
+	fmt.Fprint(&f.XMLBuffer, ">")
 	return nil
 }
 
@@ -320,7 +320,7 @@ func (f *File) ReadEndElement(sr *io.SectionReader) error {
 	if err := binary.Read(sr, binary.LittleEndian, ext); err != nil {
 		return err
 	}
-	fmt.Fprintf(&f.buffer, "</%s>", f.AddNamespace(ext.NS, ext.Name))
+	fmt.Fprintf(&f.XMLBuffer, "</%s>", f.AddNamespace(ext.NS, ext.Name))
 	return nil
 }
 
@@ -335,5 +335,5 @@ func (f *File) AddNamespace(ns, name ResStringPoolRef) string {
 func main() {
 	f, _ := os.Open("AndroidManifest.xml")
 	xml, _ := NewFile(f)
-	fmt.Println(xml.buffer.String())
+	fmt.Println(xml.XMLBuffer.String())
 }
