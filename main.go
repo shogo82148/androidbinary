@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"os"
@@ -303,7 +304,9 @@ func (f *File) ReadStartElement(sr *io.SectionReader) error {
 			}
 		}
 
-		fmt.Fprintf(&f.XMLBuffer, " %s=\"%s\"", f.AddNamespace(attr.NS, attr.Name), value)
+		fmt.Fprintf(&f.XMLBuffer, " %s=\"", f.AddNamespace(attr.NS, attr.Name))
+		xml.Escape(&f.XMLBuffer, []byte(value))
+		fmt.Fprint(&f.XMLBuffer, "\"")
 		offset += int64(ext.AttributeSize)
 	}
 	fmt.Fprint(&f.XMLBuffer, ">")
