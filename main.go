@@ -11,10 +11,11 @@ import (
 )
 
 type File struct {
-	stringPool  *ResStringPool
-	resourceMap []uint32
-	Namespace   *ResXMLTreeNamespaceExt
-	XMLBuffer   bytes.Buffer
+	stringPool     *ResStringPool
+	resourceMap    []uint32
+	notPrecessedNS map[ResStringPoolRef]ResStringPoolRef
+	namespaces     map[ResStringPoolRef]ResStringPoolRef
+	XMLBuffer      bytes.Buffer
 }
 
 const (
@@ -134,13 +135,12 @@ type ResXMLTreeEndElementExt struct {
 
 func NewFile(r io.ReaderAt) (*File, error) {
 	f := new(File)
+	fmt.Fprintf(&f.XMLBuffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
 
 	header := new(ResChunkHeader)
 	binary.Read(sr, binary.LittleEndian, header)
 	offset := uint32(header.HeaderSize)
-
-	fmt.Fprintf(&f.XMLBuffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>")
 
 	for offset < header.Size {
 		sr.Seek(int64(offset), os.SEEK_SET)
@@ -156,6 +156,8 @@ func NewFile(r io.ReaderAt) (*File, error) {
 			f.resourceMap, err = ReadResourceMap(chunkReader)
 		case RES_XML_START_NAMESPACE_TYPE:
 			err = f.ReadStartNamespace(chunkReader)
+		case RES_XML_END_NAMESPACE_TYPE:
+			err = f.ReadEndNamespace(chunkReader)
 		case RES_XML_START_ELEMENT_TYPE:
 			err = f.ReadStartElement(chunkReader)
 		case RES_XML_END_ELEMENT_TYPE:
@@ -262,7 +264,27 @@ func (f *File) ReadStartNamespace(sr *io.SectionReader) error {
 	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
 	namespace := new(ResXMLTreeNamespaceExt)
 	binary.Read(sr, binary.LittleEndian, namespace)
-	f.Namespace = namespace
+
+	if f.notPrecessedNS == nil {
+		f.notPrecessedNS = make(map[ResStringPoolRef]ResStringPoolRef)
+	}
+	f.notPrecessedNS[namespace.Uri] = namespace.Prefix
+
+	if f.namespaces == nil {
+		f.namespaces = make(map[ResStringPoolRef]ResStringPoolRef)
+	}
+	f.namespaces[namespace.Uri] = namespace.Prefix
+
+	return nil
+}
+
+func (f *File) ReadEndNamespace(sr *io.SectionReader) error {
+	header := new(ResXMLTreeNode)
+	binary.Read(sr, binary.LittleEndian, header)
+	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	namespace := new(ResXMLTreeNamespaceExt)
+	binary.Read(sr, binary.LittleEndian, namespace)
+	delete(f.namespaces, namespace.Uri)
 	return nil
 }
 
@@ -275,6 +297,17 @@ func (f *File) ReadStartElement(sr *io.SectionReader) error {
 
 	fmt.Fprintf(&f.XMLBuffer, "<%s", f.AddNamespace(ext.NS, ext.Name))
 
+	// output XML namespaces
+	if f.notPrecessedNS != nil {
+		for uri, prefix := range f.notPrecessedNS {
+			fmt.Fprintf(&f.XMLBuffer, " xmlns:%s=\"", f.GetString(prefix))
+			xml.Escape(&f.XMLBuffer, []byte(f.GetString(uri)))
+			fmt.Fprint(&f.XMLBuffer, "\"")
+		}
+		f.notPrecessedNS = nil
+	}
+
+	// process attributes
 	offset := int64(ext.AttributeStart + header.Header.HeaderSize)
 	for i := 0; i < int(ext.AttributeCount); i++ {
 		sr.Seek(offset, os.SEEK_SET)
@@ -331,7 +364,8 @@ func (f *File) ReadEndElement(sr *io.SectionReader) error {
 
 func (f *File) AddNamespace(ns, name ResStringPoolRef) string {
 	if ns != NilResStringPoolRef {
-		return fmt.Sprintf("%s:%s", f.GetString(f.Namespace.Prefix), f.GetString(name))
+		prefix := f.GetString(f.namespaces[ns])
+		return fmt.Sprintf("%s:%s", prefix, f.GetString(name))
 	} else {
 		return f.GetString(name)
 	}
