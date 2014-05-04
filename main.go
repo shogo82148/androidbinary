@@ -16,6 +16,7 @@ type File struct {
 	notPrecessedNS map[ResStringPoolRef]ResStringPoolRef
 	namespaces     map[ResStringPoolRef]ResStringPoolRef
 	XMLBuffer      bytes.Buffer
+	tablePackage   TablePackage
 }
 
 const (
@@ -138,6 +139,22 @@ type ResTableHeader struct {
 	PackageCount uint32
 }
 
+type ResTablePackage struct {
+	Header         ResChunkHeader
+	Id             uint32
+	Name           [128]uint16
+	TypeStrings    uint32
+	LastPublicType uint32
+	KeyStrings     uint32
+	LastPublicKey  uint32
+}
+
+type TablePackage struct {
+	Header      ResTablePackage
+	TypeStrings *ResStringPool
+	KeyStrings  *ResStringPool
+}
+
 func NewFile(r io.ReaderAt) (*File, error) {
 	f := new(File)
 	f.readChunk(r, 0)
@@ -171,6 +188,8 @@ func (f *File) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 		err = f.ReadStartElement(sr)
 	case RES_XML_END_ELEMENT_TYPE:
 		err = f.ReadEndElement(sr)
+	case RES_TABLE_PACKAGE_TYPE:
+		err = f.ReadTablePackage(sr)
 	}
 	if err != nil {
 		return nil, err
@@ -429,6 +448,29 @@ func (f *File) AddNamespace(ns, name ResStringPoolRef) string {
 	} else {
 		return f.GetString(name)
 	}
+}
+
+func (f *File) ReadTablePackage(sr *io.SectionReader) error {
+	header := new(ResTablePackage)
+	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
+		return err
+	}
+	f.tablePackage.Header = *header
+
+	srTypes := io.NewSectionReader(sr, int64(header.TypeStrings), int64(header.Header.Size-header.TypeStrings))
+	if typeStrings, err := ReadStringPool(srTypes); err == nil {
+		f.tablePackage.TypeStrings = typeStrings
+	} else {
+		return err
+	}
+
+	srKeys := io.NewSectionReader(sr, int64(header.KeyStrings), int64(header.Header.Size-header.KeyStrings))
+	if keyStrings, err := ReadStringPool(srKeys); err == nil {
+		f.tablePackage.KeyStrings = keyStrings
+	} else {
+		return err
+	}
+	return nil
 }
 
 func main() {
