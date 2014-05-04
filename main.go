@@ -222,11 +222,23 @@ func ReadStringPool(sr *io.SectionReader) (*ResStringPool, error) {
 }
 
 func ReadUTF16(sr *io.SectionReader, offset int64) (string, error) {
-	var size uint16
+	// read lenth of string
+	var size int
+	var first, second uint16
 	sr.Seek(offset, os.SEEK_SET)
-	if err := binary.Read(sr, binary.LittleEndian, &size); err != nil {
+	if err := binary.Read(sr, binary.LittleEndian, &first); err != nil {
 		return "", err
 	}
+	if (first & 0x8000) != 0 {
+		if err := binary.Read(sr, binary.LittleEndian, &second); err != nil {
+			return "", err
+		}
+		size = (int(first&0x7FFF) << 16) + int(second)
+	} else {
+		size = int(first)
+	}
+
+	// read string value
 	buf := make([]uint16, size)
 	if err := binary.Read(sr, binary.LittleEndian, buf); err != nil {
 		return "", err
@@ -235,11 +247,22 @@ func ReadUTF16(sr *io.SectionReader, offset int64) (string, error) {
 }
 
 func ReadUTF8(sr *io.SectionReader, offset int64) (string, error) {
-	var size uint16
+	// read lenth of string
+	var size int
+	var first, second uint8
 	sr.Seek(offset, os.SEEK_SET)
-	if err := binary.Read(sr, binary.LittleEndian, &size); err != nil {
+	if err := binary.Read(sr, binary.LittleEndian, &first); err != nil {
 		return "", err
 	}
+	if (first & 0x80) != 0 {
+		if err := binary.Read(sr, binary.LittleEndian, &second); err != nil {
+			return "", err
+		}
+		size = (int(first&0x7F) << 8) + int(second)
+	} else {
+		size = int(first)
+	}
+
 	buf := make([]uint8, size)
 	if err := binary.Read(sr, binary.LittleEndian, buf); err != nil {
 		return "", err
