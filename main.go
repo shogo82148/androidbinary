@@ -155,6 +155,33 @@ type TablePackage struct {
 	KeyStrings  *ResStringPool
 }
 
+type ResTableType struct {
+	Header       ResChunkHeader
+	Id           uint8
+	Res0         uint8
+	Res1         uint16
+	EntryCount   uint32
+	EntriesStart uint32
+	Config       ResTableConfig
+}
+
+type ResTableConfig struct {
+	Size         uint32
+	Imsi         uint32
+	Locale       uint32
+	ScreenType   uint32
+	Input        uint32
+	ScreenSize   uint32
+	Version      uint32
+	ScreenConfig uint32
+}
+
+type ResTableEntry struct {
+	Size  uint16
+	Flags uint16
+	Key   ResStringPoolRef
+}
+
 func NewFile(r io.ReaderAt) (*File, error) {
 	f := new(File)
 	f.readChunk(r, 0)
@@ -190,6 +217,8 @@ func (f *File) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 		err = f.ReadEndElement(sr)
 	case RES_TABLE_PACKAGE_TYPE:
 		err = f.ReadTablePackage(sr)
+	case RES_TABLE_TYPE_TYPE:
+		err = f.ReadTableType(sr)
 	}
 	if err != nil {
 		return nil, err
@@ -469,6 +498,45 @@ func (f *File) ReadTablePackage(sr *io.SectionReader) error {
 		f.tablePackage.KeyStrings = keyStrings
 	} else {
 		return err
+	}
+
+	offset := int64(header.Header.HeaderSize)
+	for offset < int64(header.Header.Size) {
+		chunkHeader, err := f.readChunk(sr, offset)
+		if err != nil {
+			return err
+		}
+		offset += int64(chunkHeader.Size)
+	}
+
+	return nil
+}
+
+func (f *File) ReadTableType(sr *io.SectionReader) error {
+	header := new(ResTableType)
+	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
+		return err
+	}
+	fmt.Println(header)
+
+	entryIndexes := make([]uint32, header.EntryCount)
+	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if err := binary.Read(sr, binary.LittleEndian, entryIndexes); err != nil {
+		return err
+	}
+
+	for _, index := range entryIndexes {
+		if index == 0xFFFFFFFF {
+			continue
+		}
+		sr.Seek(int64(header.EntriesStart+index), os.SEEK_SET)
+		var key ResTableEntry
+		binary.Read(sr, binary.LittleEndian, &key)
+
+		var val ResValue
+		binary.Read(sr, binary.LittleEndian, &val)
+		fmt.Println(f.GetString(key.Key), val)
+
 	}
 	return nil
 }
