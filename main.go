@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ type File struct {
 	StringPool  *ResStringPool
 	ResourceMap []uint32
 	Namespace   *ResXMLTreeNamespaceExt
+	buffer      bytes.Buffer
 }
 
 const (
@@ -244,7 +246,6 @@ func ReadResourceMap(sr *io.SectionReader) ([]uint32, error) {
 	header := new(ResChunkHeader)
 	binary.Read(sr, binary.LittleEndian, header)
 	count := (header.Size - uint32(header.HeaderSize)) / 4
-	fmt.Println(header.Size, header.HeaderSize, count)
 	resourceMap := make([]uint32, count)
 	if err := binary.Read(sr, binary.LittleEndian, resourceMap); err != nil {
 		return nil, err
@@ -266,19 +267,46 @@ func (f *File) ReadStartElement(sr *io.SectionReader) error {
 	header := new(ResXMLTreeNode)
 	binary.Read(sr, binary.LittleEndian, header)
 	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
-	attrExt := new(ResXMLTreeAttrExt)
-	binary.Read(sr, binary.LittleEndian, attrExt)
+	ext := new(ResXMLTreeAttrExt)
+	binary.Read(sr, binary.LittleEndian, ext)
 
-	fmt.Println(f.GetString(attrExt.Name))
+	fmt.Fprintf(&f.buffer, "<%s", f.AddNamespace(ext.NS, ext.Name))
 
-	offset := int64(attrExt.AttributeStart + header.Header.HeaderSize)
-	for i := 0; i < int(attrExt.AttributeCount); i++ {
+	offset := int64(ext.AttributeStart + header.Header.HeaderSize)
+	for i := 0; i < int(ext.AttributeCount); i++ {
 		sr.Seek(offset, os.SEEK_SET)
 		attr := new(ResXMLTreeAttribute)
 		binary.Read(sr, binary.LittleEndian, attr)
-		fmt.Println(f.GetString(attr.Name), f.GetString(attr.RawValue))
-		offset += int64(attrExt.AttributeSize)
+
+		var value string
+		if attr.RawValue != NilResStringPoolRef {
+			value = f.GetString(attr.RawValue)
+		} else {
+			data := attr.TypedValue.Data
+			switch attr.TypedValue.DataType {
+			case TYPE_NULL:
+				value = ""
+			case TYPE_REFERENCE:
+				value = fmt.Sprintf("@0x%08X", data)
+			case TYPE_INT_DEC:
+				value = fmt.Sprintf("%d", data)
+			case TYPE_INT_HEX:
+				value = fmt.Sprintf("0x%08X", data)
+			case TYPE_INT_BOOLEAN:
+				if data != 0 {
+					value = "true"
+				} else {
+					value = "false"
+				}
+			default:
+				value = fmt.Sprintf("@0x%08X", data)
+			}
+		}
+
+		fmt.Fprintf(&f.buffer, " %s=\"%s\"", f.AddNamespace(attr.NS, attr.Name), value)
+		offset += int64(ext.AttributeSize)
 	}
+	fmt.Fprint(&f.buffer, ">")
 	return nil
 }
 
@@ -292,15 +320,20 @@ func (f *File) ReadEndElement(sr *io.SectionReader) error {
 	if err := binary.Read(sr, binary.LittleEndian, ext); err != nil {
 		return err
 	}
-	if ext.NS != NilResStringPoolRef {
-		fmt.Printf("</%s:%s>\n", f.GetString(ext.NS), f.GetString(ext.Name))
-	} else {
-		fmt.Printf("</%s>\n", f.GetString(ext.Name))
-	}
+	fmt.Fprintf(&f.buffer, "</%s>", f.AddNamespace(ext.NS, ext.Name))
 	return nil
+}
+
+func (f *File) AddNamespace(ns, name ResStringPoolRef) string {
+	if ns != NilResStringPoolRef {
+		return fmt.Sprintf("%s:%s", f.GetString(f.Namespace.Prefix), f.GetString(name))
+	} else {
+		return f.GetString(name)
+	}
 }
 
 func main() {
 	f, _ := os.Open("AndroidManifest.xml")
-	fmt.Println(NewFile(f))
+	xml, _ := NewFile(f)
+	fmt.Println(xml.buffer.String())
 }
