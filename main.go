@@ -133,6 +133,11 @@ type ResXMLTreeEndElementExt struct {
 	Name ResStringPoolRef
 }
 
+type ResTableHeader struct {
+	Header       ResChunkHeader
+	PackageCount uint32
+}
+
 func NewFile(r io.ReaderAt) (*File, error) {
 	f := new(File)
 	f.readChunk(r, 0)
@@ -150,6 +155,8 @@ func (f *File) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 	var err error
 	sr.Seek(0, os.SEEK_SET)
 	switch chunkHeader.Type {
+	case RES_TABLE_TYPE:
+		err = f.readTable(sr)
 	case RES_XML_TYPE:
 		err = f.readXML(sr)
 	case RES_STRING_POOL_TYPE:
@@ -170,6 +177,20 @@ func (f *File) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 	}
 
 	return chunkHeader, nil
+}
+
+func (f *File) readTable(sr *io.SectionReader) error {
+	header := new(ResTableHeader)
+	binary.Read(sr, binary.LittleEndian, header)
+	offset := int64(header.Header.HeaderSize)
+	for offset < int64(header.Header.Size) {
+		chunkHeader, err := f.readChunk(sr, offset)
+		if err != nil {
+			return err
+		}
+		offset += int64(chunkHeader.Size)
+	}
+	return nil
 }
 
 func (f *File) readXML(sr *io.SectionReader) error {
@@ -414,4 +435,7 @@ func main() {
 	f, _ := os.Open("AndroidManifest.xml")
 	xml, _ := NewFile(f)
 	fmt.Println(xml.XMLBuffer.String())
+
+	r, _ := os.Open("resources.arsc")
+	NewFile(r)
 }
