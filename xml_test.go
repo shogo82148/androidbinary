@@ -56,3 +56,23 @@ func TestReadEndNamespace(t *testing.T) {
 		t.Errorf("got %v want not empty", f.namespaces[ResStringPoolRef(1)])
 	}
 }
+
+func TestAddNamespacePrefix(t *testing.T) {
+	nameRef := ResStringPoolRef(1)
+	prefixRef := ResStringPoolRef(2)
+	uriRef := ResStringPoolRef(3)
+
+	f := new(XMLFile)
+	f.namespaces = make(map[ResStringPoolRef]ResStringPoolRef)
+	f.namespaces[uriRef] = prefixRef
+	f.stringPool = new(ResStringPool)
+	f.stringPool.Strings = []string{"", "name", "prefix", "http://example.com"}
+
+	if actual := f.addNamespacePrefix(NilResStringPoolRef, nameRef); actual != "name" {
+		t.Errorf("got %v want name", actual)
+	}
+
+	if actual := f.addNamespacePrefix(uriRef, nameRef); actual != "prefix:name" {
+		t.Errorf("got %v want prefix:name", actual)
+	}
+}

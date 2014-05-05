@@ -3,6 +3,7 @@ package androidbinary
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"os"
 )
@@ -91,4 +92,13 @@ func (f *XMLFile) readEndNamespace(sr *io.SectionReader) error {
 	}
 	delete(f.namespaces, namespace.Uri)
 	return nil
+}
+
+func (f *XMLFile) addNamespacePrefix(ns, name ResStringPoolRef) string {
+	if ns != NilResStringPoolRef {
+		prefix := f.GetString(f.namespaces[ns])
+		return fmt.Sprintf("%s:%s", prefix, f.GetString(name))
+	} else {
+		return f.GetString(name)
+	}
 }
