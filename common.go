@@ -88,6 +88,10 @@ type ResValue struct {
 	Data     uint32
 }
 
+func (pool *ResStringPool) GetString(ref ResStringPoolRef) string {
+	return pool.Strings[int(ref)]
+}
+
 func readStringPool(sr *io.SectionReader) (*ResStringPool, error) {
 	sp := new(ResStringPool)
 	if err := binary.Read(sr, binary.LittleEndian, &sp.Header); err != nil {

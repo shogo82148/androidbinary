@@ -49,6 +49,10 @@ type ResXMLTreeEndElementExt struct {
 	Name ResStringPoolRef
 }
 
+func (f *XMLFile) GetString(ref ResStringPoolRef) string {
+	return f.stringPool.GetString(ref)
+}
+
 func (f *XMLFile) readStartNamespace(sr *io.SectionReader) error {
 	header := new(ResXMLTreeNode)
 	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
