@@ -29,3 +29,26 @@ func readUTF16(sr *io.SectionReader) (string, error) {
 	}
 	return string(utf16.Decode(buf)), nil
 }
+
+func readUTF8(sr *io.SectionReader) (string, error) {
+	// read lenth of string
+	var size int
+	var first, second uint8
+	if err := binary.Read(sr, binary.LittleEndian, &first); err != nil {
+		return "", err
+	}
+	if (first & 0x80) != 0 {
+		if err := binary.Read(sr, binary.LittleEndian, &second); err != nil {
+			return "", err
+		}
+		size = (int(first&0x7F) << 8) + int(second)
+	} else {
+		size = int(first)
+	}
+
+	buf := make([]uint8, size)
+	if err := binary.Read(sr, binary.LittleEndian, buf); err != nil {
+		return "", err
+	}
+	return string(buf), nil
+}
