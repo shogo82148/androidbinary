@@ -167,9 +167,12 @@ type ResTableType struct {
 }
 
 type ResTableConfig struct {
-	Size         uint32
-	Imsi         uint32
-	Locale       uint32
+	Size   uint32
+	Imsi   uint32
+	Locale struct {
+		Language [2]uint8
+		Country  [2]uint8
+	}
 	ScreenType   uint32
 	Input        uint32
 	ScreenSize   uint32
