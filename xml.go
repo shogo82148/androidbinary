@@ -73,3 +73,18 @@ func (f *XMLFile) readStartNamespace(sr *io.SectionReader) error {
 
 	return nil
 }
+
+func (f *XMLFile) readEndNamespace(sr *io.SectionReader) error {
+	header := new(ResXMLTreeNode)
+	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
+		return err
+	}
+
+	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	namespace := new(ResXMLTreeNamespaceExt)
+	if err := binary.Read(sr, binary.LittleEndian, namespace); err != nil {
+		return err
+	}
+	delete(f.namespaces, namespace.Uri)
+	return nil
+}

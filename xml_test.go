@@ -30,3 +30,29 @@ func TestReadStartNamespace(t *testing.T) {
 		t.Errorf("got %v want %v", f.namespaces[ResStringPoolRef(1)], ResStringPoolRef(2))
 	}
 }
+
+func TestReadEndNamespace(t *testing.T) {
+	input := []uint8{
+		0x01, 0x01, // Type = RES_XML_END_NAMESPACE_TYPE
+		0x10, 0x00, // HeadSize = 16 bytes
+		0x18, 0x00, 0x00, 0x00, // Size
+		0x01, 0x00, 0x00, 0x00, // LineNumber = 1
+		0xFF, 0xFF, 0xFF, 0xFF, // Comment is none
+		0x02, 0x00, 0x00, 0x00, // Prefix = 2
+		0x01, 0x00, 0x00, 0x00, // Uri = 1
+	}
+	buf := bytes.NewReader(input)
+	sr := io.NewSectionReader(buf, 0, int64(len(input)))
+
+	f := new(XMLFile)
+	f.namespaces = make(map[ResStringPoolRef]ResStringPoolRef)
+	f.namespaces[ResStringPoolRef(1)] = ResStringPoolRef(2)
+	err := f.readEndNamespace(sr)
+
+	if err != nil {
+		t.Errorf("got %v want no error", err)
+	}
+	if _, ok := f.namespaces[ResStringPoolRef(1)]; ok {
+		t.Errorf("got %v want not empty", f.namespaces[ResStringPoolRef(1)])
+	}
+}
