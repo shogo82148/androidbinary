@@ -82,7 +82,10 @@ type ResTableTypeSpec struct {
 	EntryCount uint32
 }
 
-func (f *TableFile) readTable(sr *io.SectionReader) error {
+func NewTableFile(r io.ReaderAt) (*TableFile, error) {
+	f := new(TableFile)
+	sr := io.NewSectionReader(r, 0, 1<<63-1)
+
 	header := new(ResTableHeader)
 	binary.Read(sr, binary.LittleEndian, header)
 	f.tablePackages = make([]*TablePackage, header.PackageCount)
@@ -91,11 +94,11 @@ func (f *TableFile) readTable(sr *io.SectionReader) error {
 	for offset < int64(header.Header.Size) {
 		chunkHeader, err := f.readChunk(sr, offset)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		offset += int64(chunkHeader.Size)
 	}
-	return nil
+	return f, nil
 }
 
 func (f *TableFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
@@ -110,13 +113,11 @@ func (f *TableFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, err
 	sr.Seek(0, os.SEEK_SET)
 	numTablePackages := 0
 	switch chunkHeader.Type {
-	case RES_TABLE_TYPE:
-		err = f.readTable(sr)
 	case RES_STRING_POOL_TYPE:
-		f.stringPool, err = ReadStringPool(sr)
+		f.stringPool, err = readStringPool(sr)
 	case RES_TABLE_PACKAGE_TYPE:
 		var tablePackage *TablePackage
-		tablePackage, err = ReadTablePackage(sr)
+		tablePackage, err = readTablePackage(sr)
 		f.tablePackages[numTablePackages] = tablePackage
 		numTablePackages++
 	}
