@@ -44,17 +44,39 @@ type ResTableType struct {
 }
 
 type ResTableConfig struct {
-	Size   uint32
-	Imsi   uint32
-	Locale struct {
-		Language [2]uint8
-		Country  [2]uint8
-	}
-	ScreenType   uint32
-	Input        uint32
-	ScreenSize   uint32
-	Version      uint32
-	ScreenConfig uint32
+	Size uint32
+	// imsi
+	Mcc uint16
+	Mnc uint16
+
+	// locale
+	Language [2]uint8
+	Country  [2]uint8
+
+	// screen type
+	Orientation uint8
+	Touchscreen uint8
+	Density     uint16
+
+	// inout
+	Keyboard   uint8
+	Navigation uint8
+	InputFlags uint8
+	InputPad0  uint8
+
+	// screen
+	ScreenWidth  uint16
+	ScreenHeight uint16
+
+	// version
+	SDKVersion   uint16
+	MinorVersion uint16
+
+	// screen config
+	ScreenLayout     uint8
+	UIMode           uint8
+	ScreenConfigPad1 uint8
+	ScreenConfigPad2 uint8
 }
 
 type TableType struct {
