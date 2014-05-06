@@ -6,9 +6,11 @@ import (
 	"os"
 )
 
+type ResId uint32
+
 type TableFile struct {
 	stringPool    *ResStringPool
-	tablePackages []*TablePackage
+	tablePackages map[uint32]*TablePackage
 }
 
 type ResTableHeader struct {
@@ -104,13 +106,25 @@ type ResTableTypeSpec struct {
 	EntryCount uint32
 }
 
+func (id ResId) Package() int {
+	return int(id) >> 24
+}
+
+func (id ResId) Type() int {
+	return (int(id) >> 16) & 0xFF
+}
+
+func (id ResId) Entry() int {
+	return int(id) & 0xFFFF
+}
+
 func NewTableFile(r io.ReaderAt) (*TableFile, error) {
 	f := new(TableFile)
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
 
 	header := new(ResTableHeader)
 	binary.Read(sr, binary.LittleEndian, header)
-	f.tablePackages = make([]*TablePackage, header.PackageCount)
+	f.tablePackages = make(map[uint32]*TablePackage)
 
 	offset := int64(header.Header.HeaderSize)
 	for offset < int64(header.Header.Size) {
@@ -123,6 +137,10 @@ func NewTableFile(r io.ReaderAt) (*TableFile, error) {
 	return f, nil
 }
 
+func (f *TableFile) findPackage(id int) interface{} {
+	return f.tablePackages[uint32(id)]
+}
+
 func (f *TableFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 	sr := io.NewSectionReader(r, offset, 1<<63-1-offset)
 	chunkHeader := &ResChunkHeader{}
@@ -133,15 +151,13 @@ func (f *TableFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, err
 
 	var err error
 	sr.Seek(0, os.SEEK_SET)
-	numTablePackages := 0
 	switch chunkHeader.Type {
 	case RES_STRING_POOL_TYPE:
 		f.stringPool, err = readStringPool(sr)
 	case RES_TABLE_PACKAGE_TYPE:
 		var tablePackage *TablePackage
 		tablePackage, err = readTablePackage(sr)
-		f.tablePackages[numTablePackages] = tablePackage
-		numTablePackages++
+		f.tablePackages[tablePackage.Header.Id] = tablePackage
 	}
 	if err != nil {
 		return nil, err
@@ -156,6 +172,7 @@ func readTablePackage(sr *io.SectionReader) (*TablePackage, error) {
 	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
 		return nil, err
 	}
+	tablePackage.Header = *header
 
 	srTypes := io.NewSectionReader(sr, int64(header.TypeStrings), int64(header.Header.Size-header.TypeStrings))
 	if typeStrings, err := readStringPool(srTypes); err == nil {
