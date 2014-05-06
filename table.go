@@ -2,6 +2,7 @@ package androidbinary
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"os"
 )
@@ -137,8 +138,49 @@ func NewTableFile(r io.ReaderAt) (*TableFile, error) {
 	return f, nil
 }
 
-func (f *TableFile) findPackage(id int) interface{} {
+func (f *TableFile) findPackage(id int) *TablePackage {
 	return f.tablePackages[uint32(id)]
+}
+
+func (p *TablePackage) findType(id int, config *ResTableConfig) *TableType {
+	var best *TableType
+	for _, t := range p.TableTypes {
+		if int(t.Header.Id) != id {
+			continue
+		}
+		if !t.Header.Config.Match(config) {
+			continue
+		}
+		if best == nil || t.Header.Config.IsBetterThan(&best.Header.Config, config) {
+			best = t
+		}
+	}
+	return best
+}
+
+func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, error) {
+	p := f.findPackage(id.Package())
+	t := p.findType(id.Type(), config)
+	e := t.Entries[id.Entry()]
+	v := e.Value
+	switch v.DataType {
+	case TYPE_NULL:
+		return nil, nil
+	case TYPE_STRING:
+		return f.GetString(ResStringPoolRef(v.Data)), nil
+	case TYPE_INT_DEC:
+		return v.Data, nil
+	case TYPE_INT_HEX:
+		return v.Data, nil
+	case TYPE_INT_BOOLEAN:
+		return v.Data != 0, nil
+	default:
+		return v.Data, nil
+	}
+}
+
+func (f *TableFile) GetString(ref ResStringPoolRef) string {
+	return f.stringPool.GetString(ref)
 }
 
 func (f *TableFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
