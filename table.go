@@ -244,3 +244,238 @@ func readTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
 	}
 	return flags, nil
 }
+
+func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
+	// imsi
+	if (c.Mcc != 0 && c.Mnc != 0) || (o.Mcc != 0 && o.Mnc != 0) {
+		if c.Mcc != o.Mcc {
+			if c.Mcc != 0 {
+				return false
+			}
+			if o.Mnc != 0 {
+				return true
+			}
+		}
+		if c.Mnc != o.Mnc {
+			if c.Mnc != 0 {
+				return false
+			}
+			if o.Mnc != 0 {
+				return true
+			}
+		}
+	}
+
+	// locale
+	if (c.Language[0] != 0 && c.Country[0] != 0) || (o.Language[0] != 0 && o.Country[0] != 0) {
+		if c.Language[0] != o.Language[0] {
+			if c.Language[0] != 0 {
+				return false
+			}
+			if o.Language[0] != 0 {
+				return true
+			}
+		}
+		if c.Country[0] != o.Country[0] {
+			if c.Country[0] != 0 {
+				return false
+			}
+			if o.Country[0] != 0 {
+				return true
+			}
+		}
+	}
+
+	// orientation
+	if c.Orientation != o.Orientation {
+		if c.Orientation != 0 {
+			return false
+		}
+		if o.Orientation != 0 {
+			return true
+		}
+	}
+
+	// TODO: uimode
+
+	// touchscreen
+	if c.Touchscreen != o.Touchscreen {
+		if c.Touchscreen != 0 {
+			return false
+		}
+		if o.Touchscreen != 0 {
+			return true
+		}
+	}
+
+	// TODO: input
+
+	// screen size
+	if (c.ScreenWidth != 0 && c.ScreenHeight != 0) || (o.ScreenWidth != 0 && o.ScreenHeight != 0) {
+		if c.ScreenWidth != o.ScreenWidth {
+			if c.ScreenWidth != 0 {
+				return false
+			}
+			if o.ScreenWidth != 0 {
+				return true
+			}
+		}
+		if c.ScreenHeight != o.ScreenHeight {
+			if c.ScreenHeight != 0 {
+				return false
+			}
+			if o.ScreenHeight != 0 {
+				return true
+			}
+		}
+	}
+
+	//version
+	if (c.SDKVersion != 0 && c.SDKVersion != 0) || (o.MinorVersion != 0 && o.MinorVersion != 0) {
+		if c.SDKVersion != o.SDKVersion {
+			if c.SDKVersion != 0 {
+				return false
+			}
+			if o.SDKVersion != 0 {
+				return true
+			}
+		}
+		if c.MinorVersion != o.MinorVersion {
+			if c.MinorVersion != 0 {
+				return false
+			}
+			if o.MinorVersion != 0 {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool {
+	if r == nil {
+		return c.IsMoreSpecificThan(o)
+	}
+
+	// imsi
+	if (c.Mcc != 0 && c.Mnc != 0) || (o.Mcc != 0 && o.Mnc != 0) {
+		if c.Mcc != o.Mcc && r.Mcc != 0 {
+			return c.Mcc != 0
+		}
+		if c.Mnc != o.Mnc && r.Mnc != 0 {
+			return c.Mnc != 0
+		}
+	}
+
+	// locale
+	if (c.Language[0] != 0 && c.Country[0] != 0) || (o.Language[0] != 0 && o.Country[0] != 0) {
+		if c.Language[0] != o.Language[0] && r.Language[0] != 0 {
+			return c.Language[0] != 0
+		}
+		if c.Country[0] != o.Country[0] && r.Country[0] != 0 {
+			return c.Country[0] != 0
+		}
+	}
+
+	// TODO: screen layout
+
+	// orientation
+	if c.Orientation != o.Orientation && r.Orientation != 0 {
+		return c.Orientation != 0
+	}
+
+	// TODO: uimode
+
+	// TODO: screen type
+
+	// TODO: input
+
+	// screen size
+	if (c.ScreenWidth != 0 && c.ScreenHeight != 0) || (o.ScreenWidth != 0 && o.ScreenHeight != 0) {
+		if c.ScreenWidth != o.ScreenWidth && r.ScreenWidth != 0 {
+			return c.ScreenWidth != 0
+		}
+		if c.ScreenHeight != o.ScreenHeight && r.ScreenHeight != 0 {
+			return c.ScreenHeight != 0
+		}
+	}
+
+	// version
+	if (c.SDKVersion != 0 && c.SDKVersion != 0) || (o.MinorVersion != 0 && o.MinorVersion != 0) {
+		if c.SDKVersion != o.SDKVersion && r.SDKVersion != 0 {
+			return c.SDKVersion > o.SDKVersion
+		}
+		if c.MinorVersion != o.MinorVersion {
+			return c.MinorVersion != 0
+		}
+	}
+
+	return false
+}
+
+func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
+	// match imsi
+	if c.Mcc != 0 && c.Mnc != 0 {
+		if settings.Mcc == 0 {
+			if c.Mcc != 0 {
+				return false
+			}
+		} else {
+			if c.Mcc != 0 && c.Mcc != settings.Mcc {
+				return false
+			}
+		}
+		if settings.Mnc == 0 {
+			if c.Mnc != 0 {
+				return false
+			}
+		} else {
+			if c.Mnc != 0 && c.Mnc != settings.Mnc {
+				return false
+			}
+		}
+	}
+
+	// match locale
+	if c.Language[0] != 0 && c.Country[0] != 0 {
+		if settings.Language[0] != 0 && c.Language[0] != 0 &&
+			!(settings.Language[0] == c.Language[0] && settings.Language[1] == c.Language[1]) {
+			return false
+		}
+		if settings.Country[0] != 0 && c.Country[0] != 0 &&
+			!(settings.Country[0] == c.Country[0] && settings.Country[1] == c.Country[1]) {
+			return false
+		}
+	}
+
+	// TODO: screen config
+	// TODO: screen type
+	// TODO: input
+
+	// screen size
+	if c.ScreenWidth != 0 && c.ScreenHeight != 0 {
+		if settings.ScreenWidth != 0 && c.ScreenWidth != 0 &&
+			c.ScreenWidth != settings.ScreenWidth {
+			return false
+		}
+		if settings.ScreenHeight != 0 && c.ScreenHeight != 0 &&
+			c.ScreenHeight != settings.ScreenHeight {
+			return false
+		}
+	}
+
+	// version
+	if c.SDKVersion != 0 && c.MinorVersion != 0 {
+		if settings.SDKVersion != 0 && c.SDKVersion != 0 &&
+			c.SDKVersion > settings.SDKVersion {
+			return false
+		}
+		if settings.MinorVersion != 0 && c.MinorVersion != 0 &&
+			c.MinorVersion != settings.MinorVersion {
+			return false
+		}
+	}
+
+	return true
+}
