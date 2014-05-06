@@ -78,7 +78,7 @@ type ResTableTypeSpec struct {
 	Header     ResChunkHeader
 	Id         uint8
 	Res0       uint8
-	Res1       uiont16
+	Res1       uint16
 	EntryCount uint32
 }
 
