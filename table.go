@@ -174,9 +174,8 @@ func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, 
 		return v.Data, nil
 	case TYPE_INT_BOOLEAN:
 		return v.Data != 0, nil
-	default:
-		return v.Data, nil
 	}
+	return v.Data, nil
 }
 
 func (f *TableFile) GetString(ref ResStringPoolRef) string {

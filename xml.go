@@ -153,9 +153,8 @@ func (f *XMLFile) addNamespacePrefix(ns, name ResStringPoolRef) string {
 	if ns != NilResStringPoolRef {
 		prefix := f.GetString(f.namespaces[ns])
 		return fmt.Sprintf("%s:%s", prefix, f.GetString(name))
-	} else {
-		return f.GetString(name)
 	}
+	return f.GetString(name)
 }
 
 func (f *XMLFile) readStartElement(sr *io.SectionReader) error {
