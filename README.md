@@ -10,7 +10,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/shogo82148/androidbinay"
+	"github.com/shogo82148/androidbinary"
 	"os"
 )
 
