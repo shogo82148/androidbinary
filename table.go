@@ -104,7 +104,7 @@ type ResTableConfig struct {
 	InputFlags uint8
 	InputPad0  uint8
 
-	// screen
+	// screen size
 	ScreenWidth  uint16
 	ScreenHeight uint16
 
@@ -116,6 +116,10 @@ type ResTableConfig struct {
 	ScreenLayout          uint8
 	UIMode                uint8
 	SmallestScreenWidthDp uint16
+
+	// screen size dp
+	ScreenWidthDp  uint16
+	ScreenHeightDp uint16
 }
 
 type TableType struct {
@@ -400,6 +404,27 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 		}
 	}
 
+	// screen size dp
+	if c.ScreenWidthDp != 0 || o.ScreenWidthDp != 0 ||
+		c.ScreenHeightDp != 0 || o.ScreenHeightDp != 0 {
+		if c.ScreenWidthDp != o.ScreenWidthDp {
+			if c.ScreenWidthDp == 0 {
+				return false
+			}
+			if o.ScreenWidthDp == 0 {
+				return true
+			}
+		}
+		if c.ScreenHeightDp != o.ScreenHeightDp {
+			if c.ScreenHeightDp == 0 {
+				return false
+			}
+			if o.ScreenHeightDp == 0 {
+				return true
+			}
+		}
+	}
+
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
 		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_SCREENSIZE) != 0 {
@@ -464,20 +489,23 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	// TODO: input
 
 	// screen size
-	if c.ScreenWidth != o.ScreenWidth {
-		if c.ScreenWidth != 0 {
-			return false
+	if c.ScreenWidth != 0 || o.ScreenWidth != 0 ||
+		c.ScreenHeight != 0 || o.ScreenHeight != 0 {
+		if c.ScreenWidth != o.ScreenWidth {
+			if c.ScreenWidth == 0 {
+				return false
+			}
+			if o.ScreenWidth == 0 {
+				return true
+			}
 		}
-		if o.ScreenWidth != 0 {
-			return true
-		}
-	}
-	if c.ScreenHeight != o.ScreenHeight {
-		if c.ScreenHeight != 0 {
-			return false
-		}
-		if o.ScreenHeight != 0 {
-			return true
+		if c.ScreenHeight != o.ScreenHeight {
+			if c.ScreenHeight == 0 {
+				return false
+			}
+			if o.ScreenHeight == 0 {
+				return true
+			}
 		}
 	}
 
@@ -543,6 +571,23 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		}
 	}
 
+	// screen size dp
+	if c.ScreenWidthDp != 0 || c.ScreenHeightDp != 0 || o.ScreenWidthDp != 0 || o.ScreenHeightDp != 0 {
+		myDelta := 0
+		otherDelta := 0
+		if r.ScreenWidthDp != 0 {
+			myDelta += int(r.ScreenWidthDp) - int(c.ScreenWidthDp)
+			otherDelta += int(r.ScreenWidthDp) - int(o.ScreenWidthDp)
+		}
+		if r.ScreenHeightDp != 0 {
+			myDelta += int(r.ScreenHeightDp) - int(c.ScreenHeightDp)
+			otherDelta += int(r.ScreenHeightDp) - int(o.ScreenHeightDp)
+		}
+		if myDelta != otherDelta {
+			return myDelta < otherDelta
+		}
+	}
+
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
 		mySL := c.ScreenLayout & MASK_SCREENSIZE
@@ -593,11 +638,18 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 
 	// screen size
 	if c.ScreenWidth != 0 || c.ScreenHeight != 0 || o.ScreenWidth != 0 || o.ScreenHeight != 0 {
-		if c.ScreenWidth != o.ScreenWidth && r.ScreenWidth != 0 {
-			return c.ScreenWidth != 0
+		myDelta := 0
+		otherDelta := 0
+		if r.ScreenWidth != 0 {
+			myDelta += int(r.ScreenWidth) - int(c.ScreenWidth)
+			otherDelta += int(r.ScreenWidth) - int(o.ScreenWidth)
 		}
-		if c.ScreenHeight != o.ScreenHeight && r.ScreenHeight != 0 {
-			return c.ScreenHeight != 0
+		if r.ScreenHeight != 0 {
+			myDelta += int(r.ScreenHeight) - int(c.ScreenHeight)
+			otherDelta += int(r.ScreenHeight) - int(o.ScreenHeight)
+		}
+		if myDelta != otherDelta {
+			return myDelta < otherDelta
 		}
 	}
 
@@ -683,15 +735,25 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 		return false
 	}
 
+	// screen size dp
+	if c.ScreenWidthDp != 0 &&
+		c.ScreenWidthDp > settings.ScreenWidthDp {
+		return false
+	}
+	if c.ScreenHeightDp != 0 &&
+		c.ScreenHeightDp > settings.ScreenHeightDp {
+		return false
+	}
+
 	// TODO: input
 
 	// screen size
-	if settings.ScreenWidth != 0 && c.ScreenWidth != 0 &&
-		c.ScreenWidth != settings.ScreenWidth {
+	if c.ScreenWidth != 0 &&
+		c.ScreenWidth > settings.ScreenWidth {
 		return false
 	}
-	if settings.ScreenHeight != 0 && c.ScreenHeight != 0 &&
-		c.ScreenHeight != settings.ScreenHeight {
+	if c.ScreenHeight != 0 &&
+		c.ScreenHeight > settings.ScreenHeight {
 		return false
 	}
 
