@@ -113,10 +113,9 @@ type ResTableConfig struct {
 	MinorVersion uint16
 
 	// screen config
-	ScreenLayout     uint8
-	UIMode           uint8
-	ScreenConfigPad1 uint8
-	ScreenConfigPad2 uint8
+	ScreenLayout          uint8
+	UIMode                uint8
+	SmallestScreenWidthDp uint16
 }
 
 type TableType struct {
@@ -389,6 +388,18 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 		}
 	}
 
+	// smallest screen width dp
+	if c.SmallestScreenWidthDp != 0 || o.SmallestScreenWidthDp != 0 {
+		if c.SmallestScreenWidthDp != o.SmallestScreenWidthDp {
+			if c.SmallestScreenWidthDp != 0 {
+				return false
+			}
+			if o.SmallestScreenWidthDp != 0 {
+				return true
+			}
+		}
+	}
+
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
 		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_SCREENSIZE) != 0 {
@@ -525,6 +536,13 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		}
 	}
 
+	// smallest screen width dp
+	if c.SmallestScreenWidthDp != 0 || o.SmallestScreenWidthDp != 0 {
+		if c.SmallestScreenWidthDp != o.SmallestScreenWidthDp {
+			return c.SmallestScreenWidthDp > o.SmallestScreenWidthDp
+		}
+	}
+
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
 		mySL := c.ScreenLayout & MASK_SCREENSIZE
@@ -650,6 +668,12 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	uiModeType := c.UIMode & MASK_UI_MODE_TYPE
 	setUIModeType := settings.UIMode & MASK_UI_MODE_TYPE
 	if uiModeType != 0 && uiModeType != setUIModeType {
+		return false
+	}
+
+	// smallest screen width dp
+	if c.SmallestScreenWidthDp != 0 &&
+		c.SmallestScreenWidthDp > settings.SmallestScreenWidthDp {
 		return false
 	}
 
