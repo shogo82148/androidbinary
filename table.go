@@ -632,7 +632,41 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		}
 	}
 
-	// TODO: screen type
+	// screen type
+	if c.Density != o.Density {
+		h := int(c.Density)
+		if h == 0 {
+			h = 160
+		}
+		l := int(o.Density)
+		if l == 0 {
+			l = 160
+		}
+		blmBigger := true
+		if l > h {
+			h, l = l, h
+			blmBigger = false
+		}
+
+		reqValue := int(r.Density)
+		if reqValue == 0 {
+			reqValue = 160
+		}
+		if reqValue >= h {
+			return blmBigger
+		}
+		if l >= reqValue {
+			return !blmBigger
+		}
+		if (2*l-reqValue)*h > reqValue*reqValue {
+			return !blmBigger
+		} else {
+			return blmBigger
+		}
+	}
+	if c.Touchscreen != o.Touchscreen && r.Touchscreen != 0 {
+		return c.Touchscreen != 0
+	}
 
 	// TODO: input
 
@@ -742,6 +776,14 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	}
 	if c.ScreenHeightDp != 0 &&
 		c.ScreenHeightDp > settings.ScreenHeightDp {
+		return false
+	}
+
+	// screen type
+	if c.Orientation != 0 && c.Orientation != settings.Orientation {
+		return false
+	}
+	if c.Touchscreen != 0 && c.Touchscreen != settings.Touchscreen {
 		return false
 	}
 
