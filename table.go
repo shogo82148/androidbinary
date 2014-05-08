@@ -83,6 +83,20 @@ const (
 	UI_MODE_NIGHT_YES   = 0x20
 )
 
+// input flags
+const (
+	MASK_KEYSHIDDEN = 0x03
+	KEYSHIDDEN_ANY  = 0x00
+	KEYSHIDDEN_NO   = 0x01
+	KEYSHIDDEN_YES  = 0x02
+	KEYSHIDDEN_SOFT = 0x03
+
+	MASK_NAVHIDDEN = 0x0c
+	NAVHIDDEN_ANY  = 0x00
+	NAVHIDDEN_NO   = 0x04
+	NAVHIDDEN_YES  = 0x08
+)
+
 type ResTableConfig struct {
 	Size uint32
 	// imsi
@@ -486,7 +500,47 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 		}
 	}
 
-	// TODO: input
+	// input
+	if c.InputFlags != 0 || o.InputFlags != 0 {
+		myKeysHidden := c.InputFlags & MASK_KEYSHIDDEN
+		oKeysHidden := o.InputFlags & MASK_KEYSHIDDEN
+		if (myKeysHidden ^ oKeysHidden) != 0 {
+			if myKeysHidden == 0 {
+				return false
+			}
+			if oKeysHidden == 0 {
+				return true
+			}
+		}
+		myNavHidden := c.InputFlags & MASK_NAVHIDDEN
+		oNavHidden := o.InputFlags & MASK_NAVHIDDEN
+		if (myNavHidden ^ oNavHidden) != 0 {
+			if myNavHidden == 0 {
+				return false
+			}
+			if oNavHidden == 0 {
+				return true
+			}
+		}
+	}
+
+	if c.Keyboard != o.Keyboard {
+		if c.Keyboard == 0 {
+			return false
+		}
+		if o.Keyboard == 0 {
+			return true
+		}
+	}
+
+	if c.Navigation != o.Navigation {
+		if c.Navigation == 0 {
+			return false
+		}
+		if o.Navigation == 0 {
+			return true
+		}
+	}
 
 	// screen size
 	if c.ScreenWidth != 0 || o.ScreenWidth != 0 ||
@@ -668,7 +722,41 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		return c.Touchscreen != 0
 	}
 
-	// TODO: input
+	// input
+	if c.InputFlags != 0 || o.InputFlags != 0 {
+		myKeysHidden := c.InputFlags & MASK_KEYSHIDDEN
+		oKeysHidden := o.InputFlags & MASK_KEYSHIDDEN
+		reqKeysHidden := r.InputFlags & MASK_KEYSHIDDEN
+		if myKeysHidden != oKeysHidden && reqKeysHidden != 0 {
+			switch {
+			case myKeysHidden == 0:
+				return false
+			case oKeysHidden == 0:
+				return true
+			case reqKeysHidden == myKeysHidden:
+				return true
+			case reqKeysHidden == oKeysHidden:
+				return false
+			}
+		}
+		myNavHidden := c.InputFlags & MASK_NAVHIDDEN
+		oNavHidden := o.InputFlags & MASK_NAVHIDDEN
+		reqNavHidden := r.InputFlags & MASK_NAVHIDDEN
+		if myNavHidden != oNavHidden && reqNavHidden != 0 {
+			switch {
+			case myNavHidden == 0:
+				return false
+			case oNavHidden == 0:
+				return true
+			}
+		}
+	}
+	if c.Keyboard != o.Keyboard && r.Keyboard != 0 {
+		return c.Keyboard != 0
+	}
+	if c.Navigation != o.Navigation && r.Navigation != 0 {
+		return c.Navigation != 0
+	}
 
 	// screen size
 	if c.ScreenWidth != 0 || c.ScreenHeight != 0 || o.ScreenWidth != 0 || o.ScreenHeight != 0 {
@@ -787,7 +875,27 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 		return false
 	}
 
-	// TODO: input
+	// input
+	if c.InputFlags != 0 {
+		myKeysHidden := c.InputFlags & MASK_KEYSHIDDEN
+		oKeysHidden := settings.InputFlags & MASK_KEYSHIDDEN
+		if myKeysHidden != 0 && myKeysHidden != oKeysHidden {
+			if myKeysHidden != KEYSHIDDEN_NO || oKeysHidden != KEYSHIDDEN_SOFT {
+				return false
+			}
+		}
+		myNavHidden := c.InputFlags & MASK_NAVHIDDEN
+		oNavHidden := settings.InputFlags & MASK_NAVHIDDEN
+		if myNavHidden != 0 && myNavHidden != oNavHidden {
+			return false
+		}
+	}
+	if c.Keyboard != 0 && c.Keyboard != settings.Keyboard {
+		return false
+	}
+	if c.Navigation != 0 && c.Navigation != settings.Navigation {
+		return false
+	}
 
 	// screen size
 	if c.ScreenWidth != 0 &&
