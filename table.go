@@ -46,6 +46,20 @@ type ResTableType struct {
 	Config       ResTableConfig
 }
 
+const (
+	MASK_UI_MODE_TYPE   = 0x0f
+	UI_MODE_TYPE_ANY    = 0x01
+	UI_MODE_TYPE_NORMAL = 0x02
+	UI_MODE_TYPE_DESK   = 0x03
+	UI_MODE_TYPE_CAR    = 0x04
+
+	MASK_UI_MODE_NIGHT  = 0x30
+	SHIFT_UI_MODE_NIGHT = 4
+	UI_MODE_NIGHT_ANY   = 0x00
+	UI_MODE_NIGHT_NO    = 0x10
+	UI_MODE_NIGHT_YES   = 0x20
+)
+
 type ResTableConfig struct {
 	Size uint32
 	// imsi
@@ -350,7 +364,26 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 		}
 	}
 
-	// TODO: uimode
+	// uimode
+	if c.UIMode != 0 || o.UIMode != 0 {
+		diff := c.UIMode ^ o.UIMode
+		if (diff & MASK_UI_MODE_TYPE) != 0 {
+			if (c.UIMode & MASK_UI_MODE_TYPE) != 0 {
+				return false
+			}
+			if (o.UIMode & MASK_UI_MODE_TYPE) != 0 {
+				return true
+			}
+		}
+		if (diff & MASK_UI_MODE_NIGHT) != 0 {
+			if (c.UIMode & MASK_UI_MODE_NIGHT) != 0 {
+				return false
+			}
+			if (o.UIMode & MASK_UI_MODE_NIGHT) != 0 {
+				return true
+			}
+		}
+	}
 
 	// touchscreen
 	if c.Touchscreen != o.Touchscreen {
@@ -435,7 +468,16 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		return c.Orientation != 0
 	}
 
-	// TODO: uimode
+	// uimode
+	if c.UIMode != 0 || o.UIMode != 0 {
+		diff := c.UIMode ^ o.UIMode
+		if (diff&MASK_UI_MODE_TYPE) != 0 && (r.UIMode&MASK_UI_MODE_TYPE) != 0 {
+			return (c.UIMode & MASK_UI_MODE_TYPE) != 0
+		}
+		if (diff&MASK_UI_MODE_NIGHT) != 0 && (r.UIMode&MASK_UI_MODE_NIGHT) != 0 {
+			return (c.UIMode & MASK_UI_MODE_NIGHT) != 0
+		}
+	}
 
 	// TODO: screen type
 
@@ -497,6 +539,13 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 
 	// TODO: screen config
 	// TODO: screen type
+
+	uiModeType := c.UIMode & MASK_UI_MODE_TYPE
+	setUIModeType := settings.UIMode & MASK_UI_MODE_TYPE
+	if uiModeType != 0 && uiModeType != setUIModeType {
+		return false
+	}
+
 	// TODO: input
 
 	// screen size
