@@ -671,6 +671,12 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 		return false
 	}
 
+	uiModeNight := c.UIMode & MASK_UI_MODE_NIGHT
+	setUIModeNight := settings.UIMode & MASK_UI_MODE_NIGHT
+	if uiModeNight != 0 && uiModeNight != setUIModeNight {
+		return false
+	}
+
 	// smallest screen width dp
 	if c.SmallestScreenWidthDp != 0 &&
 		c.SmallestScreenWidthDp > settings.SmallestScreenWidthDp {
