@@ -46,6 +46,29 @@ type ResTableType struct {
 	Config       ResTableConfig
 }
 
+// ScreenLayout bits
+const (
+	MASK_SCREENSIZE   = 0x0f
+	SCREENSIZE_ANY    = 0x01
+	SCREENSIZE_SMALL  = 0x02
+	SCREENSIZE_NORMAL = 0x03
+	SCREENSIZE_LARGE  = 0x04
+	SCREENSIZE_XLARGE = 0x05
+
+	MASK_SCREENLONG  = 0x30
+	SHIFT_SCREENLONG = 4
+	SCREENLONG_ANY   = 0x00
+	SCREENLONG_NO    = 0x10
+	SCREENLONG_YES   = 0x20
+
+	MASK_LAYOUTDIR  = 0xC0
+	SHIFT_LAYOUTDIR = 6
+	LAYOUTDIR_ANY   = 0x00
+	LAYOUTDIR_LTR   = 0x40
+	LAYOUTDIR_RTL   = 0x80
+)
+
+// UIMode bits
 const (
 	MASK_UI_MODE_TYPE   = 0x0f
 	UI_MODE_TYPE_ANY    = 0x01
@@ -354,6 +377,38 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 		}
 	}
 
+	// screen layout
+	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
+		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_LAYOUTDIR) != 0 {
+			if (c.ScreenLayout & MASK_LAYOUTDIR) != 0 {
+				return false
+			}
+			if (o.ScreenLayout & MASK_LAYOUTDIR) != 0 {
+				return true
+			}
+		}
+	}
+
+	// screen layout
+	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
+		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_SCREENSIZE) != 0 {
+			if (c.ScreenLayout & MASK_SCREENSIZE) != 0 {
+				return false
+			}
+			if (o.ScreenLayout & MASK_SCREENSIZE) != 0 {
+				return true
+			}
+		}
+		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_SCREENLONG) != 0 {
+			if (c.ScreenLayout & MASK_SCREENLONG) != 0 {
+				return false
+			}
+			if (o.ScreenLayout & MASK_SCREENLONG) != 0 {
+				return true
+			}
+		}
+	}
+
 	// orientation
 	if c.Orientation != o.Orientation {
 		if c.Orientation != 0 {
@@ -461,7 +516,42 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		}
 	}
 
-	// TODO: screen layout
+	// screen layout
+	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
+		myLayoutdir := c.ScreenLayout & MASK_LAYOUTDIR
+		oLayoutdir := o.ScreenLayout & MASK_LAYOUTDIR
+		if (myLayoutdir^oLayoutdir) != 0 && (r.ScreenLayout&MASK_LAYOUTDIR) != 0 {
+			return myLayoutdir > oLayoutdir
+		}
+	}
+
+	// screen layout
+	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
+		mySL := c.ScreenLayout & MASK_SCREENSIZE
+		oSL := o.ScreenLayout & MASK_SCREENSIZE
+		if (mySL^oSL) != 0 && (r.ScreenLayout&MASK_SCREENSIZE) != 0 {
+			fixedMySL := mySL
+			fixedOSL := oSL
+			if (r.ScreenLayout & MASK_SCREENSIZE) >= SCREENSIZE_NORMAL {
+				if fixedMySL == 0 {
+					fixedMySL = SCREENSIZE_NORMAL
+				}
+				if fixedOSL == 0 {
+					fixedOSL = SCREENSIZE_NORMAL
+				}
+			}
+			if fixedMySL == fixedOSL {
+				return mySL != 0
+			} else {
+				return fixedMySL > fixedOSL
+			}
+		}
+
+		if ((c.ScreenLayout^o.ScreenLayout)&MASK_SCREENLONG) != 0 &&
+			(r.ScreenLayout&MASK_SCREENLONG) != 0 {
+			return (c.ScreenLayout & MASK_SCREENLONG) != 0
+		}
+	}
 
 	// orientation
 	if c.Orientation != o.Orientation || r.Orientation != 0 {
@@ -537,9 +627,26 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 		return false
 	}
 
-	// TODO: screen config
-	// TODO: screen type
+	// screen layout
+	layoutDir := c.ScreenLayout & MASK_LAYOUTDIR
+	setLayoutDir := settings.ScreenLayout & MASK_LAYOUTDIR
+	if layoutDir != 0 && layoutDir != setLayoutDir {
+		return false
+	}
 
+	screenSize := c.ScreenLayout & MASK_SCREENSIZE
+	setScreenSize := settings.ScreenLayout & MASK_SCREENSIZE
+	if screenSize != 0 && screenSize > setScreenSize {
+		return false
+	}
+
+	screenLong := c.ScreenLayout & MASK_SCREENLONG
+	setScreenLong := settings.ScreenLayout & MASK_SCREENLONG
+	if screenLong != 0 && screenLong != setScreenLong {
+		return false
+	}
+
+	// ui mode
 	uiModeType := c.UIMode & MASK_UI_MODE_TYPE
 	setUIModeType := settings.UIMode & MASK_UI_MODE_TYPE
 	if uiModeType != 0 && uiModeType != setUIModeType {
