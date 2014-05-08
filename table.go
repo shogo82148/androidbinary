@@ -346,18 +346,18 @@ func readTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
 func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	// imsi
 	if c.Mcc != o.Mcc {
-		if c.Mcc != 0 {
+		if c.Mcc == 0 {
 			return false
 		}
-		if o.Mnc != 0 {
+		if o.Mnc == 0 {
 			return true
 		}
 	}
 	if c.Mnc != o.Mnc {
-		if c.Mnc != 0 {
+		if c.Mnc == 0 {
 			return false
 		}
-		if o.Mnc != 0 {
+		if o.Mnc == 0 {
 			return true
 		}
 	}
@@ -383,10 +383,10 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
 		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_LAYOUTDIR) != 0 {
-			if (c.ScreenLayout & MASK_LAYOUTDIR) != 0 {
+			if (c.ScreenLayout & MASK_LAYOUTDIR) == 0 {
 				return false
 			}
-			if (o.ScreenLayout & MASK_LAYOUTDIR) != 0 {
+			if (o.ScreenLayout & MASK_LAYOUTDIR) == 0 {
 				return true
 			}
 		}
@@ -395,10 +395,10 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	// smallest screen width dp
 	if c.SmallestScreenWidthDp != 0 || o.SmallestScreenWidthDp != 0 {
 		if c.SmallestScreenWidthDp != o.SmallestScreenWidthDp {
-			if c.SmallestScreenWidthDp != 0 {
+			if c.SmallestScreenWidthDp == 0 {
 				return false
 			}
-			if o.SmallestScreenWidthDp != 0 {
+			if o.SmallestScreenWidthDp == 0 {
 				return true
 			}
 		}
@@ -428,18 +428,18 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
 		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_SCREENSIZE) != 0 {
-			if (c.ScreenLayout & MASK_SCREENSIZE) != 0 {
+			if (c.ScreenLayout & MASK_SCREENSIZE) == 0 {
 				return false
 			}
-			if (o.ScreenLayout & MASK_SCREENSIZE) != 0 {
+			if (o.ScreenLayout & MASK_SCREENSIZE) == 0 {
 				return true
 			}
 		}
 		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_SCREENLONG) != 0 {
-			if (c.ScreenLayout & MASK_SCREENLONG) != 0 {
+			if (c.ScreenLayout & MASK_SCREENLONG) == 0 {
 				return false
 			}
-			if (o.ScreenLayout & MASK_SCREENLONG) != 0 {
+			if (o.ScreenLayout & MASK_SCREENLONG) == 0 {
 				return true
 			}
 		}
@@ -447,10 +447,10 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 
 	// orientation
 	if c.Orientation != o.Orientation {
-		if c.Orientation != 0 {
+		if c.Orientation == 0 {
 			return false
 		}
-		if o.Orientation != 0 {
+		if o.Orientation == 0 {
 			return true
 		}
 	}
@@ -459,18 +459,18 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	if c.UIMode != 0 || o.UIMode != 0 {
 		diff := c.UIMode ^ o.UIMode
 		if (diff & MASK_UI_MODE_TYPE) != 0 {
-			if (c.UIMode & MASK_UI_MODE_TYPE) != 0 {
+			if (c.UIMode & MASK_UI_MODE_TYPE) == 0 {
 				return false
 			}
-			if (o.UIMode & MASK_UI_MODE_TYPE) != 0 {
+			if (o.UIMode & MASK_UI_MODE_TYPE) == 0 {
 				return true
 			}
 		}
 		if (diff & MASK_UI_MODE_NIGHT) != 0 {
-			if (c.UIMode & MASK_UI_MODE_NIGHT) != 0 {
+			if (c.UIMode & MASK_UI_MODE_NIGHT) == 0 {
 				return false
 			}
-			if (o.UIMode & MASK_UI_MODE_NIGHT) != 0 {
+			if (o.UIMode & MASK_UI_MODE_NIGHT) == 0 {
 				return true
 			}
 		}
@@ -478,10 +478,10 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 
 	// touchscreen
 	if c.Touchscreen != o.Touchscreen {
-		if c.Touchscreen != 0 {
+		if c.Touchscreen == 0 {
 			return false
 		}
-		if o.Touchscreen != 0 {
+		if o.Touchscreen == 0 {
 			return true
 		}
 	}
@@ -511,18 +511,18 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 
 	//version
 	if c.SDKVersion != o.SDKVersion {
-		if c.SDKVersion != 0 {
+		if c.SDKVersion == 0 {
 			return false
 		}
-		if o.SDKVersion != 0 {
+		if o.SDKVersion == 0 {
 			return true
 		}
 	}
 	if c.MinorVersion != o.MinorVersion {
-		if c.MinorVersion != 0 {
+		if c.MinorVersion == 0 {
 			return false
 		}
-		if o.MinorVersion != 0 {
+		if o.MinorVersion == 0 {
 			return true
 		}
 	}
