@@ -199,11 +199,15 @@ func newZeroFilledReader(r io.Reader, actual int64, expected int64) (io.Reader, 
 
 	// read `actual' bytes from r, and
 	buf := new(bytes.Buffer)
-	io.CopyN(buf, r, actual)
+	if _, err := io.CopyN(buf, r, actual); err != nil {
+		return nil, err
+	}
 
 	// fill zero until `expected' bytes
 	for i := actual; i < expected; i++ {
-		buf.WriteByte(0x00)
+		if err := buf.WriteByte(0x00); err != nil {
+			return nil, err
+		}
 	}
 
 	return buf, nil
