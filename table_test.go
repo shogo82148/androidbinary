@@ -113,6 +113,91 @@ var isMoreSpecificThanTests = []struct {
 		},
 		expected: true,
 	},
+	{
+		me:       &ResTableConfig{ScreenLayout: SCREENSIZE_NORMAL},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{ScreenLayout: SCREENLONG_YES},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{ScreenLayout: LAYOUTDIR_LTR},
+		other:    &ResTableConfig{ScreenLayout: LAYOUTDIR_ANY},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{SmallestScreenWidthDp: 72},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{ScreenWidthDp: 100},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{ScreenHeightDp: 100},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{Orientation: 1},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{UIMode: UI_MODE_TYPE_ANY},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{UIMode: UI_MODE_NIGHT_YES},
+		other:    &ResTableConfig{UIMode: UI_MODE_NIGHT_ANY},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{Keyboard: 1},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{Navigation: 1},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{UIMode: UI_MODE_TYPE_ANY},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{Touchscreen: 1},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{ScreenWidth: 100},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{ScreenHeight: 100},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{SDKVersion: 1},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{SDKVersion: 1, MinorVersion: 1},
+		other:    &ResTableConfig{SDKVersion: 1},
+		expected: true,
+	},
 }
 
 func TestIsMoreSpecificThan(t *testing.T) {
