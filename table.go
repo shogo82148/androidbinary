@@ -385,18 +385,18 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 
 	// locale
 	if c.Language[0] != o.Language[0] {
-		if c.Language[0] != 0 {
+		if c.Language[0] == 0 {
 			return false
 		}
-		if o.Language[0] != 0 {
+		if o.Language[0] == 0 {
 			return true
 		}
 	}
 	if c.Country[0] != o.Country[0] {
-		if c.Country[0] != 0 {
+		if c.Country[0] == 0 {
 			return false
 		}
-		if o.Country[0] != 0 {
+		if o.Country[0] == 0 {
 			return true
 		}
 	}
