@@ -77,3 +77,60 @@ func TestGetResource(t *testing.T) {
 		t.Errorf("got %v want \"\"", val)
 	}
 }
+
+var isMoreSpecificThanTests = []struct {
+	me       *ResTableConfig
+	other    *ResTableConfig
+	expected bool
+}{
+	{
+		me:       &ResTableConfig{},
+		other:    &ResTableConfig{},
+		expected: false,
+	},
+	{
+		me:       &ResTableConfig{Mcc: 1},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{Mcc: 1, Mnc: 1},
+		other:    &ResTableConfig{Mcc: 1},
+		expected: true,
+	},
+	{
+		me:       &ResTableConfig{Language: [2]byte{'j', 'a'}},
+		other:    &ResTableConfig{},
+		expected: true,
+	},
+	{
+		me: &ResTableConfig{
+			Language: [2]uint8{'j', 'a'},
+			Country:  [2]uint8{'J', 'P'},
+		},
+		other: &ResTableConfig{
+			Language: [2]uint8{'j', 'a'},
+		},
+		expected: true,
+	},
+}
+
+func TestIsMoreSpecificThan(t *testing.T) {
+	for _, tt := range isMoreSpecificThanTests {
+		actual := tt.me.IsMoreSpecificThan(tt.other)
+		if actual != tt.expected {
+			if tt.expected {
+				t.Errorf("%v is more specific than %v, but get false", tt.me, tt.other)
+			} else {
+				t.Errorf("%v is not more specific than %v, but get true", tt.me, tt.other)
+			}
+		}
+
+		if tt.expected {
+			// If 'me' is more specific than 'other', 'other' is not more specific than 'me'
+			if tt.other.IsMoreSpecificThan(tt.me) {
+				t.Errorf("%v is not more specific than %v, but get true", tt.other, tt.me)
+			}
+		}
+	}
+}
