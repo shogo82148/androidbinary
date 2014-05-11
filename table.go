@@ -298,7 +298,7 @@ func readTablePackage(sr *io.SectionReader) (*TablePackage, error) {
 		switch chunkHeader.Type {
 		case RES_TABLE_TYPE_TYPE:
 			var tableType *TableType
-			tableType, err = readTableType(chunkReader)
+			tableType, err = readTableType(chunkHeader, chunkReader)
 			tablePackage.TableTypes = append(tablePackage.TableTypes, tableType)
 		case RES_TABLE_TYPE_SPEC_TYPE:
 			_, err = readTableTypeSpec(chunkReader)
@@ -312,13 +312,7 @@ func readTablePackage(sr *io.SectionReader) (*TablePackage, error) {
 	return tablePackage, nil
 }
 
-func readTableType(sr *io.SectionReader) (*TableType, error) {
-	chunkHeader := &ResChunkHeader{}
-	sr.Seek(0, os.SEEK_SET)
-	if err := binary.Read(sr, binary.LittleEndian, chunkHeader); err != nil {
-		return nil, err
-	}
-
+func readTableType(chunkHeader *ResChunkHeader, sr *io.SectionReader) (*TableType, error) {
 	// TableType header may be omitted
 	header := new(ResTableType)
 	sr.Seek(0, os.SEEK_SET)
