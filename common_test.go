@@ -132,3 +132,40 @@ func TestReadUTF8(t *testing.T) {
 		}
 	}
 }
+
+var newZeroFilledReaderTests = []struct {
+	input    []uint8
+	actual   int64
+	expected int64
+	output   []uint8
+}{
+	{
+		input:    []uint8{0x01, 0x23, 0x45, 0x67},
+		actual:   4,
+		expected: 4,
+		output:   []uint8{0x01, 0x23, 0x45, 0x67},
+	},
+	{
+		input:    []uint8{0x01, 0x23, 0x45, 0x67},
+		actual:   4,
+		expected: 8,
+		output:   []uint8{0x01, 0x23, 0x45, 0x67, 0x00, 0x00, 0x00, 0x00},
+	},
+}
+
+func TestNewZeroFilledReader(t *testing.T) {
+	for _, tt := range newZeroFilledReaderTests {
+		buf := bytes.NewReader(tt.input)
+		r, err := newZeroFilledReader(buf, tt.actual, tt.expected)
+		if err != nil {
+			t.Errorf("got %v want no error", err)
+		}
+		actualBytes := make([]uint8, tt.expected)
+		r.Read(actualBytes)
+		for i, a := range tt.output {
+			if actualBytes[i] != a {
+				t.Errorf("got %v(position %d) wants %v", actualBytes[i], i, a)
+			}
+		}
+	}
+}
