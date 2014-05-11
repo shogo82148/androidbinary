@@ -1,7 +1,6 @@
 package androidbinary
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -322,23 +321,13 @@ func readTableType(sr *io.SectionReader) (*TableType, error) {
 
 	// TableType header may be omitted
 	header := new(ResTableType)
-	fullSize := uint16(unsafe.Sizeof(*header))
 	sr.Seek(0, os.SEEK_SET)
-	if chunkHeader.HeaderSize < fullSize {
-		buf := new(bytes.Buffer)
-		io.CopyN(buf, sr, int64(chunkHeader.HeaderSize))
-
-		for i := chunkHeader.HeaderSize; i < fullSize; i++ {
-			buf.WriteByte(0x00)
-		}
-
-		if err := binary.Read(buf, binary.LittleEndian, header); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
-			return nil, err
-		}
+	buf, err := newZeroFilledReader(sr, int64(chunkHeader.HeaderSize), int64(unsafe.Sizeof(*header)))
+	if err != nil {
+		return nil, err
+	}
+	if err := binary.Read(buf, binary.LittleEndian, header); err != nil {
+		return nil, err
 	}
 
 	entryIndexes := make([]uint32, header.EntryCount)

@@ -1,6 +1,7 @@
 package androidbinary
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
 	"os"
@@ -188,4 +189,22 @@ func readUTF8(sr *io.SectionReader) (string, error) {
 		return "", err
 	}
 	return string(buf), nil
+}
+
+func newZeroFilledReader(r io.Reader, actual int64, expected int64) (io.Reader, error) {
+	if actual >= expected {
+		// no need to fill
+		return r, nil
+	}
+
+	// read `actual' bytes from r, and
+	buf := new(bytes.Buffer)
+	io.CopyN(buf, r, actual)
+
+	// fill zero until `expected' bytes
+	for i := actual; i < expected; i++ {
+		buf.WriteByte(0x00)
+	}
+
+	return buf, nil
 }
