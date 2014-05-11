@@ -678,7 +678,7 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	}
 
 	// orientation
-	if c.Orientation != o.Orientation || r.Orientation != 0 {
+	if c.Orientation != o.Orientation && r.Orientation != 0 {
 		return c.Orientation != 0
 	}
 
@@ -787,7 +787,7 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		if c.SDKVersion != o.SDKVersion && r.SDKVersion != 0 {
 			return c.SDKVersion > o.SDKVersion
 		}
-		if c.MinorVersion != o.MinorVersion {
+		if c.MinorVersion != o.MinorVersion && r.MinorVersion != 0 {
 			return c.MinorVersion != 0
 		}
 	}
