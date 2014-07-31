@@ -21,3 +21,7 @@ func main() {
 	// read XML from reader
 }
 ```
+
+## License
+
+This software is released under the MIT License, see LICENSE.
