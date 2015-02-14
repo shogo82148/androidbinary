@@ -146,18 +146,9 @@ func readStringPool(sr *io.SectionReader) (*ResStringPool, error) {
 
 func readUTF16(sr *io.SectionReader) (string, error) {
 	// read lenth of string
-	var size int
-	var first, second uint16
-	if err := binary.Read(sr, binary.LittleEndian, &first); err != nil {
-		return "", err
-	}
-	if (first & 0x8000) != 0 {
-		if err := binary.Read(sr, binary.LittleEndian, &second); err != nil {
-			return "", err
-		}
-		size = (int(first&0x7FFF) << 16) + int(second)
-	} else {
-		size = int(first)
+	size, err := readUTF16length(sr)
+	if err != nil {
+		return "", nil
 	}
 
 	// read string value
@@ -168,20 +159,34 @@ func readUTF16(sr *io.SectionReader) (string, error) {
 	return string(utf16.Decode(buf)), nil
 }
 
-func readUTF8(sr *io.SectionReader) (string, error) {
-	// read lenth of string
+func readUTF16length(sr *io.SectionReader) (int, error) {
 	var size int
-	var first, second uint8
+	var first, second uint16
 	if err := binary.Read(sr, binary.LittleEndian, &first); err != nil {
-		return "", err
+		return 0, err
 	}
-	if (first & 0x80) != 0 {
+	if (first & 0x8000) != 0 {
 		if err := binary.Read(sr, binary.LittleEndian, &second); err != nil {
-			return "", err
+			return 0, err
 		}
-		size = (int(first&0x7F) << 8) + int(second)
+		size = (int(first&0x7FFF) << 16) + int(second)
 	} else {
 		size = int(first)
+	}
+	return size, nil
+}
+
+func readUTF8(sr *io.SectionReader) (string, error) {
+	// skip utf16 length
+	_, err := readUTF8length(sr)
+	if err != nil {
+		return "", err
+	}
+
+	// read lenth of string
+	size, err := readUTF8length(sr)
+	if err != nil {
+		return "", err
 	}
 
 	buf := make([]uint8, size)
@@ -189,6 +194,23 @@ func readUTF8(sr *io.SectionReader) (string, error) {
 		return "", err
 	}
 	return string(buf), nil
+}
+
+func readUTF8length(sr *io.SectionReader) (int, error) {
+	var size int
+	var first, second uint8
+	if err := binary.Read(sr, binary.LittleEndian, &first); err != nil {
+		return 0, err
+	}
+	if (first & 0x80) != 0 {
+		if err := binary.Read(sr, binary.LittleEndian, &second); err != nil {
+			return 0, err
+		}
+		size = (int(first&0x7F) << 8) + int(second)
+	} else {
+		size = int(first)
+	}
+	return size, nil
 }
 
 func newZeroFilledReader(r io.Reader, actual int64, expected int64) (io.Reader, error) {
