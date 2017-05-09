@@ -2,6 +2,7 @@ package androidbinary
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -218,6 +219,9 @@ func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, 
 	t := p.findType(id.Type(), config)
 	e := t.Entries[id.Entry()]
 	v := e.Value
+	if v == nil {
+		return nil, errors.New("get resource error")
+	}
 	switch v.DataType {
 	case TYPE_NULL:
 		return nil, nil
