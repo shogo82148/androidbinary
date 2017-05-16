@@ -52,7 +52,7 @@ type Application struct {
 	SupportsRtl           bool          `xml:"supportsRtl,attr"`
 	TaskAffinity          string        `xml:"taskAffinity,attr"`
 	TestOnly              bool          `xml:"testOnly,attr"`
-	Theme                 int           `xml:"theme,attr"`
+	Theme                 string        `xml:"theme,attr"`
 	UiOptions             string        `xml:"uiOptions,attr"`
 	VmSafeMode            bool          `xml:"vmSafeMode,attr"`
 	Activity              []AppActivity `xml:"activity"`
