@@ -44,6 +44,9 @@ func OpenFile(filename string) (apk *Apk, err error) {
 		return nil, err
 	}
 	apk, err = OpenZipReader(f, fi.Size())
+	if err != nil {
+		return nil, err
+	}
 	apk.f = f
 	return
 }
