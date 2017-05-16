@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetIcon(t *testing.T) {
+func TestParseAPK(t *testing.T) {
 	apk, err := OpenFile("testdata/helloworld.apk")
 	assert.NoError(t, err)
 
