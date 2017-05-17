@@ -2,6 +2,7 @@ androidbinary
 =====
 
 [![Build Status](https://travis-ci.org/shogo82148/androidbinary.svg?branch=master)](https://travis-ci.org/shogo82148/androidbinary)
+[![GoDoc](https://godoc.org/github.com/shogo82148/androidbinary?status.svg)](https://godoc.org/github.com/shogo82148/androidbinary)
 
 Android binary file parser
 
