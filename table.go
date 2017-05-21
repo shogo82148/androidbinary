@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
+	"strings"
 	"unsafe"
 )
 
@@ -161,6 +163,27 @@ type ResTableTypeSpec struct {
 	Res0       uint8
 	Res1       uint16
 	EntryCount uint32
+}
+
+// IsResId returns whether s is ResId.
+func IsResId(s string) bool {
+	return strings.HasPrefix(s, "@0x")
+}
+
+// ParseResId parses ResId.
+func ParseResId(s string) (ResId, error) {
+	if !IsResId(s) {
+		return 0, fmt.Errorf("androidbinary: %s is not ResId", s)
+	}
+	id, err := strconv.ParseUint(s[3:], 16, 32)
+	if err != nil {
+		return 0, err
+	}
+	return ResId(id), nil
+}
+
+func (id ResId) String() string {
+	return fmt.Sprintf("@0x%08X", uint32(id))
 }
 
 func (id ResId) Package() int {

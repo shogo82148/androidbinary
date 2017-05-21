@@ -5,6 +5,31 @@ import (
 	"testing"
 )
 
+func TestIsResId(t *testing.T) {
+	cases := []struct {
+		input string
+		want  bool
+	}{
+		{"@0x00", true},
+		{"foo", false},
+	}
+	for _, c := range cases {
+		if got := IsResId(c.input); got != c.want {
+			t.Errorf("%s: want %v, got %v", c.input, got, c.want)
+		}
+	}
+}
+
+func TestParseResId(t *testing.T) {
+	id, err := ParseResId("@0x12345678")
+	if err != nil {
+		t.Error(err)
+	}
+	if id != 0x12345678 {
+		t.Errorf("want 0x12345678, got %X", id)
+	}
+}
+
 func loadTestData() *TableFile {
 	f, _ := os.Open("testdata/resources.arsc")
 	tableFile, _ := NewTableFile(f)
