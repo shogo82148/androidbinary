@@ -2,7 +2,6 @@ package androidbinary
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -239,11 +238,17 @@ func (p *TablePackage) findType(id int, config *ResTableConfig) *TableType {
 
 func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, error) {
 	p := f.findPackage(id.Package())
+	if p == nil {
+		return nil, fmt.Errorf("androidbinary: package 0x%02X not found", id.Package())
+	}
 	t := p.findType(id.Type(), config)
+	if t == nil {
+		return nil, fmt.Errorf("androidbinary: type 0x%02X not found", id.Type())
+	}
 	e := t.Entries[id.Entry()]
 	v := e.Value
 	if v == nil {
-		return nil, errors.New("get resource error")
+		return nil, fmt.Errorf("androidbinary: entry 0x%04X not found", id.Entry())
 	}
 	switch v.DataType {
 	case TYPE_NULL:
