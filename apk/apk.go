@@ -121,7 +121,7 @@ func (k *Apk) parseManifest() error {
 	}
 	xmlfile, err := androidbinary.NewXMLFile(bytes.NewReader(xmlData))
 	if err != nil {
-		return errors.Wrap(err, "parse-axml")
+		return errors.Wrap(err, "parse-xml")
 	}
 	reader := xmlfile.Reader()
 	data, err := ioutil.ReadAll(reader)
