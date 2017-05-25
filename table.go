@@ -399,12 +399,11 @@ func readTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
 }
 
 func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
-	// non-nill ResTableConfig is always more specific than nil ResTableConfig
-	if c != nil && o == nil {
-		return true
+	// nil ResTableConfig is never more specific than any ResTableConfig
+	if c == nil {
+		return false
 	}
-
-	if c == o {
+	if o == nil {
 		return false
 	}
 
@@ -427,21 +426,10 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	}
 
 	// locale
-	if c.Language[0] != o.Language[0] {
-		if c.Language[0] == 0 {
-			return false
-		}
-		if o.Language[0] == 0 {
-			return true
-		}
-	}
-	if c.Country[0] != o.Country[0] {
-		if c.Country[0] == 0 {
-			return false
-		}
-		if o.Country[0] == 0 {
-			return true
-		}
+	if diff := c.IsLocaleMoreSpecificThan(o); diff < 0 {
+		return false
+	} else if diff > 0 {
+		return true
 	}
 
 	// screen layout
@@ -639,12 +627,12 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		return c.IsMoreSpecificThan(o)
 	}
 
-	if c != nil {
-		if o == nil || c == o {
-			return false
-		}
-	} else {
-		return o != nil
+	// nil ResTableConfig is never better than any ResTableConfig
+	if c == nil {
+		return false
+	}
+	if o == nil {
+		return false
 	}
 
 	// imsi
@@ -658,13 +646,8 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	}
 
 	// locale
-	if c.Language[0] != 0 || c.Country[0] != 0 || o.Language[0] != 0 || o.Country[0] != 0 {
-		if c.Language[0] != o.Language[0] && r.Language[0] != 0 {
-			return c.Language[0] != 0
-		}
-		if c.Country[0] != o.Country[0] && r.Country[0] != 0 {
-			return c.Country[0] != 0
-		}
+	if c.IsLocaleBetterThan(o, r) {
+		return true
 	}
 
 	// screen layout
@@ -771,9 +754,8 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		}
 		if (2*l-reqValue)*h > reqValue*reqValue {
 			return !blmBigger
-		} else {
-			return blmBigger
 		}
+		return blmBigger
 	}
 	if c.Touchscreen != o.Touchscreen && r.Touchscreen != 0 {
 		return c.Touchscreen != 0
@@ -845,6 +827,64 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	return false
 }
 
+func (c *ResTableConfig) IsLocaleMoreSpecificThan(o *ResTableConfig) int {
+	if (c.Language != [2]uint8{} || c.Country != [2]uint8{}) || (o.Language != [2]uint8{} || o.Country != [2]uint8{}) {
+		if c.Language != o.Language {
+			if c.Language == [2]uint8{} {
+				return -1
+			}
+			if o.Language == [2]uint8{} {
+				return 1
+			}
+		}
+
+		if c.Country != o.Country {
+			if c.Country == [2]uint8{} {
+				return -1
+			}
+			if o.Country == [2]uint8{} {
+				return 1
+			}
+		}
+	}
+	return 0
+}
+
+func (c *ResTableConfig) IsLocaleBetterThan(o *ResTableConfig, r *ResTableConfig) bool {
+	if r.Language == [2]uint8{} && r.Country == [2]uint8{} {
+		// The request doesn't have a locale, so no resource is better
+		// than the other.
+		return false
+	}
+
+	if c.Language == [2]uint8{} && c.Country == [2]uint8{} && o.Language == [2]uint8{} && o.Country == [2]uint8{} {
+		// The locales parts of both resources are empty, so no one is better
+		// than the other.
+		return false
+	}
+
+	if c.Language != o.Language {
+		// The languages of the two resources are not the same.
+
+		// the US English resource have traditionally lived for most apps.
+		if r.Language == [2]uint8{'e', 'n'} {
+			if r.Country == [2]uint8{'U', 'S'} {
+				if c.Language != [2]uint8{} {
+					return c.Country == [2]uint8{} || c.Country == [2]uint8{'U', 'S'}
+				}
+				return !(c.Country == [2]uint8{} || c.Country == [2]uint8{'U', 'S'})
+			}
+		}
+		return c.Language != [2]uint8{}
+	}
+
+	if c.Country != o.Country {
+		return c.Country != [2]uint8{}
+	}
+
+	return false
+}
+
 func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	// nil ResTableConfig always matches.
 	if settings == nil {
@@ -874,13 +914,19 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	}
 
 	// match locale
-	if settings.Language[0] != 0 && c.Language[0] != 0 &&
-		!(settings.Language[0] == c.Language[0] && settings.Language[1] == c.Language[1]) {
-		return false
-	}
-	if settings.Country[0] != 0 && c.Country[0] != 0 &&
-		!(settings.Country[0] == c.Country[0] && settings.Country[1] == c.Country[1]) {
-		return false
+	if c.Language != [2]uint8{0, 0} {
+		// Don't consider country and variants when deciding matches.
+		// If two configs differ only in their country and variant,
+		// they can be weeded out in the isMoreSpecificThan test.
+		if c.Language != settings.Language {
+			return false
+		}
+
+		if c.Country != [2]uint8{0, 0} {
+			if c.Country != settings.Country {
+				return false
+			}
+		}
 	}
 
 	// screen layout

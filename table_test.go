@@ -45,61 +45,41 @@ func TestFindPackage(t *testing.T) {
 	}
 }
 
-func TestFindType(t *testing.T) {
+func TestGetResourceNil(t *testing.T) {
 	tableFile := loadTestData()
-	p := tableFile.findPackage(0x7F)
-	id := 0x04
-	config := &ResTableConfig{}
-	tableType := p.findType(id, config)
-	if int(tableType.Header.Id) != id {
-		t.Errorf("got %v want %v", tableType.Header.Id, id)
-	}
-	locale := tableType.Header.Config.Locale()
-	if locale != "" {
-		t.Errorf("got %v want \"\"", locale)
+	val, _ := tableFile.GetResource(ResId(0x7f040000), nil)
+	if val != "FireworksMeasure" {
+		t.Errorf(`got %v want "花火距離計算"`, val)
 	}
 }
 
-func TestFindTypeJa(t *testing.T) {
+func TestGetResourceDefault(t *testing.T) {
 	tableFile := loadTestData()
-	p := tableFile.findPackage(0x7F)
-	id := 0x04
-	config := &ResTableConfig{}
-	config.Language[0] = uint8('j')
-	config.Language[1] = uint8('a')
-	tableType := p.findType(id, config)
-	if int(tableType.Header.Id) != id {
-		t.Errorf("got %v want %v", tableType.Header.Id, id)
-	}
-	locale := tableType.Header.Config.Locale()
-	if locale != "ja" {
-		t.Errorf("got %v want ja", locale)
+	val, _ := tableFile.GetResource(ResId(0x7f040000), &ResTableConfig{})
+	if val != "FireworksMeasure" {
+		t.Errorf(`got %v want "FireworksMeasure"`, val)
 	}
 }
 
-func TestFindTypeEn(t *testing.T) {
+func TestGetResourceJA(t *testing.T) {
 	tableFile := loadTestData()
-	p := tableFile.findPackage(0x7F)
-	id := 0x04
-	config := &ResTableConfig{}
-	config.Language[0] = uint8('e')
-	config.Language[1] = uint8('n')
-	tableType := p.findType(id, config)
-	if int(tableType.Header.Id) != id {
-		t.Errorf("got %v want %v", tableType.Header.Id, id)
+	config := &ResTableConfig{
+		Language: [2]uint8{'j', 'a'},
 	}
-	locale := tableType.Header.Config.Locale()
-	if locale != "" {
-		t.Errorf("got %v want \"\"", locale)
+	val, _ := tableFile.GetResource(ResId(0x7f040000), config)
+	if val != "花火距離計算" {
+		t.Errorf(`got %v want "花火距離計算"`, val)
 	}
 }
 
-func TestGetResource(t *testing.T) {
+func TestGetResourceEN(t *testing.T) {
 	tableFile := loadTestData()
-	config := &ResTableConfig{}
+	config := &ResTableConfig{
+		Language: [2]uint8{'e', 'n'},
+	}
 	val, _ := tableFile.GetResource(ResId(0x7f040000), config)
 	if val != "FireworksMeasure" {
-		t.Errorf("got %v want \"\"", val)
+		t.Errorf(`got %v want "FireworksMeasure"`, val)
 	}
 }
 
@@ -108,6 +88,21 @@ var isMoreSpecificThanTests = []struct {
 	other    *ResTableConfig
 	expected bool
 }{
+	{
+		me:       nil,
+		other:    nil,
+		expected: false,
+	},
+	{
+		me:       nil,
+		other:    &ResTableConfig{},
+		expected: false,
+	},
+	{
+		me:       &ResTableConfig{},
+		other:    nil,
+		expected: false,
+	},
 	{
 		me:       &ResTableConfig{},
 		other:    &ResTableConfig{},
@@ -124,7 +119,9 @@ var isMoreSpecificThanTests = []struct {
 		expected: true,
 	},
 	{
-		me:       &ResTableConfig{Language: [2]byte{'j', 'a'}},
+		me: &ResTableConfig{
+			Language: [2]uint8{'j', 'a'},
+		},
 		other:    &ResTableConfig{},
 		expected: true,
 	},
@@ -230,16 +227,16 @@ func TestIsMoreSpecificThan(t *testing.T) {
 		actual := tt.me.IsMoreSpecificThan(tt.other)
 		if actual != tt.expected {
 			if tt.expected {
-				t.Errorf("%v is more specific than %v, but get false", tt.me, tt.other)
+				t.Errorf("%+v is more specific than %+v, but get false", tt.me, tt.other)
 			} else {
-				t.Errorf("%v is not more specific than %v, but get true", tt.me, tt.other)
+				t.Errorf("%+v is not more specific than %+v, but get true", tt.me, tt.other)
 			}
 		}
 
 		if tt.expected {
 			// If 'me' is more specific than 'other', 'other' is not more specific than 'me'
 			if tt.other.IsMoreSpecificThan(tt.me) {
-				t.Errorf("%v is not more specific than %v, but get true", tt.other, tt.me)
+				t.Errorf("%+v is not more specific than %+v, but get true", tt.other, tt.me)
 			}
 		}
 	}
@@ -447,16 +444,16 @@ func TestIsBetterThan(t *testing.T) {
 		actual := tt.me.IsBetterThan(tt.other, tt.require)
 		if actual != tt.expected {
 			if tt.expected {
-				t.Errorf("%v is better than %v, but get false", tt.me, tt.other)
+				t.Errorf("%+v is better than %+v, but get false (%+v)", tt.me, tt.other, tt.require)
 			} else {
-				t.Errorf("%v is not better than %v, but get true", tt.me, tt.other)
+				t.Errorf("%+v is not better than %+v, but get true (%+v)", tt.me, tt.other, tt.require)
 			}
 		}
 
 		if tt.expected {
 			// If 'me' is better than 'other', 'other' is not better than 'me'
 			if tt.other.IsBetterThan(tt.me, tt.require) {
-				t.Errorf("%v is not better than %v, but get true", tt.other, tt.me)
+				t.Errorf("%v is not better than %+v, but get true (%+v)", tt.other, tt.me, tt.require)
 			}
 		}
 	}
