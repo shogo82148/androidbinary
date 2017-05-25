@@ -220,20 +220,26 @@ func (f *TableFile) findPackage(id int) *TablePackage {
 	return f.tablePackages[uint32(id)]
 }
 
-func (p *TablePackage) findType(id int, config *ResTableConfig) *TableType {
+func (p *TablePackage) findEntry(typeIndex, entryIndex int, config *ResTableConfig) TableEntry {
 	var best *TableType
 	for _, t := range p.TableTypes {
-		if int(t.Header.Id) != id {
-			continue
-		}
-		if !t.Header.Config.Match(config) {
-			continue
-		}
-		if best == nil || t.Header.Config.IsBetterThan(&best.Header.Config, config) {
+		switch {
+		case int(t.Header.Id) != typeIndex:
+			// nothing to do
+		case !t.Header.Config.Match(config):
+			// nothing to do
+		case entryIndex >= len(t.Entries):
+			// nothing to do
+		case t.Entries[entryIndex].Value == nil:
+			// nothing to do
+		case best == nil || t.Header.Config.IsBetterThan(&best.Header.Config, config):
 			best = t
 		}
 	}
-	return best
+	if best == nil || entryIndex >= len(best.Entries) {
+		return TableEntry{}
+	}
+	return best.Entries[entryIndex]
 }
 
 func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, error) {
@@ -241,11 +247,7 @@ func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, 
 	if p == nil {
 		return nil, fmt.Errorf("androidbinary: package 0x%02X not found", id.Package())
 	}
-	t := p.findType(id.Type(), config)
-	if t == nil {
-		return nil, fmt.Errorf("androidbinary: type 0x%02X not found", id.Type())
-	}
-	e := t.Entries[id.Entry()]
+	e := p.findEntry(id.Type(), id.Entry(), config)
 	v := e.Value
 	if v == nil {
 		return nil, fmt.Errorf("androidbinary: entry 0x%04X not found", id.Entry())
