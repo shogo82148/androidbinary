@@ -12,9 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	_ "image/jpeg"
-	_ "image/png"
-
 	"github.com/pkg/errors"
 	"github.com/shogo82148/androidbinary"
 )
