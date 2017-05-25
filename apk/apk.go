@@ -16,8 +16,6 @@ import (
 	"github.com/shogo82148/androidbinary"
 )
 
-var DefaultResTableConfig = &androidbinary.ResTableConfig{}
-
 type Apk struct {
 	f         *os.File
 	zipreader *zip.Reader
@@ -143,9 +141,6 @@ func (k *Apk) parseResources() (err error) {
 }
 
 func (k *Apk) getResource(id string, resConfig *androidbinary.ResTableConfig) string {
-	if resConfig == nil {
-		resConfig = DefaultResTableConfig
-	}
 	var resId uint32
 	_, err := fmt.Sscanf(id, "@0x%x", &resId)
 	if err != nil {

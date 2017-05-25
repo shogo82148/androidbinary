@@ -399,6 +399,15 @@ func readTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
 }
 
 func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
+	// non-nill ResTableConfig is always more specific than nil ResTableConfig
+	if c != nil && o == nil {
+		return true
+	}
+
+	if c == o {
+		return false
+	}
+
 	// imsi
 	if c.Mcc != o.Mcc {
 		if c.Mcc == 0 {
@@ -630,6 +639,14 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		return c.IsMoreSpecificThan(o)
 	}
 
+	if c != nil {
+		if o == nil || c == o {
+			return false
+		}
+	} else {
+		return o != nil
+	}
+
 	// imsi
 	if c.Mcc != 0 || c.Mnc != 0 || o.Mcc != 0 || o.Mnc != 0 {
 		if c.Mcc != o.Mcc && r.Mcc != 0 {
@@ -830,6 +847,13 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 }
 
 func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
+	// nil ResTableConfig always matches.
+	if settings == nil {
+		return true
+	} else if c == nil {
+		return *settings == ResTableConfig{}
+	}
+
 	// match imsi
 	if settings.Mcc == 0 {
 		if c.Mcc != 0 {
