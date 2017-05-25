@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -274,13 +273,17 @@ func (f *TableFile) GetString(ref ResStringPoolRef) string {
 func (f *TableFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 	sr := io.NewSectionReader(r, offset, 1<<63-1-offset)
 	chunkHeader := &ResChunkHeader{}
-	sr.Seek(0, os.SEEK_SET)
+	if _, err := sr.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
 	if err := binary.Read(sr, binary.LittleEndian, chunkHeader); err != nil {
 		return nil, err
 	}
 
 	var err error
-	sr.Seek(0, os.SEEK_SET)
+	if _, err := sr.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
 	switch chunkHeader.Type {
 	case RES_STRING_POOL_TYPE:
 		f.stringPool, err = readStringPool(sr)
@@ -321,14 +324,18 @@ func readTablePackage(sr *io.SectionReader) (*TablePackage, error) {
 	offset := int64(header.Header.HeaderSize)
 	for offset < int64(header.Header.Size) {
 		chunkHeader := &ResChunkHeader{}
-		sr.Seek(offset, os.SEEK_SET)
+		if _, err := sr.Seek(offset, io.SeekStart); err != nil {
+			return nil, err
+		}
 		if err := binary.Read(sr, binary.LittleEndian, chunkHeader); err != nil {
 			return nil, err
 		}
 
 		var err error
 		chunkReader := io.NewSectionReader(sr, offset, int64(chunkHeader.Size))
-		sr.Seek(offset, os.SEEK_SET)
+		if _, err := sr.Seek(offset, io.SeekStart); err != nil {
+			return nil, err
+		}
 		switch chunkHeader.Type {
 		case RES_TABLE_TYPE_TYPE:
 			var tableType *TableType
@@ -349,7 +356,9 @@ func readTablePackage(sr *io.SectionReader) (*TablePackage, error) {
 func readTableType(chunkHeader *ResChunkHeader, sr *io.SectionReader) (*TableType, error) {
 	// TableType header may be omitted
 	header := new(ResTableType)
-	sr.Seek(0, os.SEEK_SET)
+	if _, err := sr.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
 	buf, err := newZeroFilledReader(sr, int64(chunkHeader.HeaderSize), int64(unsafe.Sizeof(*header)))
 	if err != nil {
 		return nil, err
@@ -359,7 +368,9 @@ func readTableType(chunkHeader *ResChunkHeader, sr *io.SectionReader) (*TableTyp
 	}
 
 	entryIndexes := make([]uint32, header.EntryCount)
-	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if _, err := sr.Seek(int64(header.Header.HeaderSize), io.SeekStart); err != nil {
+		return nil, err
+	}
 	if err := binary.Read(sr, binary.LittleEndian, entryIndexes); err != nil {
 		return nil, err
 	}
@@ -369,7 +380,9 @@ func readTableType(chunkHeader *ResChunkHeader, sr *io.SectionReader) (*TableTyp
 		if index == 0xFFFFFFFF {
 			continue
 		}
-		sr.Seek(int64(header.EntriesStart+index), os.SEEK_SET)
+		if _, err := sr.Seek(int64(header.EntriesStart+index), io.SeekStart); err != nil {
+			return nil, err
+		}
 		var key ResTableEntry
 		binary.Read(sr, binary.LittleEndian, &key)
 		entries[i].Key = &key
@@ -391,7 +404,9 @@ func readTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
 	}
 
 	flags := make([]uint32, header.EntryCount)
-	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if _, err := sr.Seek(int64(header.Header.HeaderSize), io.SeekStart); err != nil {
+		return nil, err
+	}
 	if err := binary.Read(sr, binary.LittleEndian, flags); err != nil {
 		return nil, err
 	}

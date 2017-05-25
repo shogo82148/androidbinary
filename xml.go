@@ -6,7 +6,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"os"
 )
 
 type XMLFile struct {
@@ -79,13 +78,17 @@ func (f *XMLFile) Reader() *bytes.Reader {
 func (f *XMLFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 	sr := io.NewSectionReader(r, offset, 1<<63-1-offset)
 	chunkHeader := &ResChunkHeader{}
-	sr.Seek(0, os.SEEK_SET)
+	if _, err := sr.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
 	if err := binary.Read(sr, binary.LittleEndian, chunkHeader); err != nil {
 		return nil, err
 	}
 
 	var err error
-	sr.Seek(0, os.SEEK_SET)
+	if _, err := sr.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
 	switch chunkHeader.Type {
 	case RES_STRING_POOL_TYPE:
 		f.stringPool, err = readStringPool(sr)
@@ -115,7 +118,9 @@ func (f *XMLFile) readStartNamespace(sr *io.SectionReader) error {
 		return err
 	}
 
-	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if _, err := sr.Seek(int64(header.Header.HeaderSize), io.SeekStart); err != nil {
+		return err
+	}
 	namespace := new(ResXMLTreeNamespaceExt)
 	if err := binary.Read(sr, binary.LittleEndian, namespace); err != nil {
 		return err
@@ -140,7 +145,9 @@ func (f *XMLFile) readEndNamespace(sr *io.SectionReader) error {
 		return err
 	}
 
-	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if _, err := sr.Seek(int64(header.Header.HeaderSize), io.SeekStart); err != nil {
+		return err
+	}
 	namespace := new(ResXMLTreeNamespaceExt)
 	if err := binary.Read(sr, binary.LittleEndian, namespace); err != nil {
 		return err
@@ -163,7 +170,9 @@ func (f *XMLFile) readStartElement(sr *io.SectionReader) error {
 		return err
 	}
 
-	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if _, err := sr.Seek(int64(header.Header.HeaderSize), io.SeekStart); err != nil {
+		return err
+	}
 	ext := new(ResXMLTreeAttrExt)
 	if err := binary.Read(sr, binary.LittleEndian, ext); err != nil {
 		return nil
@@ -184,7 +193,9 @@ func (f *XMLFile) readStartElement(sr *io.SectionReader) error {
 	// process attributes
 	offset := int64(ext.AttributeStart + header.Header.HeaderSize)
 	for i := 0; i < int(ext.AttributeCount); i++ {
-		sr.Seek(offset, os.SEEK_SET)
+		if _, err := sr.Seek(offset, io.SeekStart); err != nil {
+			return err
+		}
 		attr := new(ResXMLTreeAttribute)
 		binary.Read(sr, binary.LittleEndian, attr)
 
@@ -227,7 +238,9 @@ func (f *XMLFile) readEndElement(sr *io.SectionReader) error {
 	if err := binary.Read(sr, binary.LittleEndian, header); err != nil {
 		return err
 	}
-	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if _, err := sr.Seek(int64(header.Header.HeaderSize), io.SeekStart); err != nil {
+		return err
+	}
 	ext := new(ResXMLTreeEndElementExt)
 	if err := binary.Read(sr, binary.LittleEndian, ext); err != nil {
 		return err

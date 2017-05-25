@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"os"
 	"unicode/utf16"
 )
 
@@ -117,7 +116,9 @@ func readStringPool(sr *io.SectionReader) (*ResStringPool, error) {
 	for i, start := range stringStarts {
 		var str string
 		var err error
-		sr.Seek(int64(sp.Header.StringStart+start), os.SEEK_SET)
+		if _, err := sr.Seek(int64(sp.Header.StringStart+start), io.SeekStart); err != nil {
+			return nil, err
+		}
 		if (sp.Header.Flags & UTF8_FLAG) == 0 {
 			str, err = readUTF16(sr)
 		} else {
@@ -131,12 +132,12 @@ func readStringPool(sr *io.SectionReader) (*ResStringPool, error) {
 
 	sp.Styles = make([]ResStringPoolSpan, sp.Header.StyleCount)
 	for i, start := range styleStarts {
-		var style ResStringPoolSpan
-		sr.Seek(int64(sp.Header.StylesStart+start), os.SEEK_SET)
-		if err := binary.Read(sr, binary.LittleEndian, &style); err != nil {
+		if _, err := sr.Seek(int64(sp.Header.StylesStart+start), io.SeekStart); err != nil {
 			return nil, err
 		}
-		sp.Styles[i] = style
+		if err := binary.Read(sr, binary.LittleEndian, &sp.Styles[i]); err != nil {
+			return nil, err
+		}
 	}
 
 	return sp, nil

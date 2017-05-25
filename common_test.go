@@ -29,7 +29,7 @@ var readStringPoolTests = []struct {
 
 			// StyleIndexes
 			0x00, 0x00, 0x00, 0x00,
-			0x04, 0x00, 0x00, 0x00,
+			0x08, 0x00, 0x00, 0x00,
 
 			// Strings
 			0x01, 0x00, 0x61, 0x00,
@@ -41,7 +41,7 @@ var readStringPoolTests = []struct {
 			0x03, 0x00, 0x00, 0x00,
 			0x04, 0x00, 0x00, 0x00,
 		},
-		[]string{"a", "\3042"},
+		[]string{"a", "\u3042"},
 		[]ResStringPoolSpan{{1, 2}, {3, 4}},
 	},
 }
@@ -54,10 +54,10 @@ func TestReadStringPool(t *testing.T) {
 		if err != nil {
 			t.Errorf("got %v want no error", err)
 		}
-		if reflect.DeepEqual(actual.Strings, tt.strings) {
+		if !reflect.DeepEqual(actual.Strings, tt.strings) {
 			t.Errorf("got %v want %v", actual.Strings, tt.strings)
 		}
-		if reflect.DeepEqual(actual.Styles, tt.styles) {
+		if !reflect.DeepEqual(actual.Styles, tt.styles) {
 			t.Errorf("got %v want %v", actual.Styles, tt.styles)
 		}
 	}
