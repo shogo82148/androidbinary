@@ -717,9 +717,8 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 			}
 			if fixedMySL == fixedOSL {
 				return mySL != 0
-			} else {
-				return fixedMySL > fixedOSL
 			}
+			return fixedMySL > fixedOSL
 		}
 
 		if ((c.ScreenLayout^o.ScreenLayout)&MASK_SCREENLONG) != 0 &&
@@ -834,7 +833,7 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	}
 
 	// version
-	if c.SDKVersion != 0 || c.SDKVersion != 0 || o.MinorVersion != 0 || o.MinorVersion != 0 {
+	if c.SDKVersion != 0 || o.MinorVersion != 0 {
 		if c.SDKVersion != o.SDKVersion && r.SDKVersion != 0 {
 			return c.SDKVersion > o.SDKVersion
 		}
