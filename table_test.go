@@ -48,7 +48,7 @@ func TestFindPackage(t *testing.T) {
 func TestGetResourceNil(t *testing.T) {
 	tableFile := loadTestData()
 	val, _ := tableFile.GetResource(ResId(0x7f040000), nil)
-	if val != "FireworksMeasure" {
+	if val != "花火距離計算" {
 		t.Errorf(`got %v want "花火距離計算"`, val)
 	}
 }
