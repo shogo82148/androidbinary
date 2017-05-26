@@ -74,7 +74,7 @@ func (k *Apk) Close() error {
 // Icon return icon image
 func (k *Apk) Icon(resConfig *androidbinary.ResTableConfig) (image.Image, error) {
 	iconPath := k.getResource(k.manifest.App.Icon, resConfig)
-	if androidbinary.IsResId(iconPath) {
+	if androidbinary.IsResID(iconPath) {
 		return nil, errors.New("unable to convert icon-id to icon path")
 	}
 	imgData, err := k.readZipFile(iconPath)
@@ -87,7 +87,7 @@ func (k *Apk) Icon(resConfig *androidbinary.ResTableConfig) (image.Image, error)
 
 func (k *Apk) Label(resConfig *androidbinary.ResTableConfig) (s string, err error) {
 	s = k.getResource(k.manifest.App.Label, resConfig)
-	if androidbinary.IsResId(s) {
+	if androidbinary.IsResID(s) {
 		err = errors.New("unable to convert label-id to string")
 	}
 	return
@@ -140,7 +140,7 @@ func (k *Apk) parseResources() (err error) {
 }
 
 func (k *Apk) getResource(id string, resConfig *androidbinary.ResTableConfig) string {
-	resID, err := androidbinary.ParseResId(id)
+	resID, err := androidbinary.ParseResID(id)
 	if err != nil {
 		return id
 	}

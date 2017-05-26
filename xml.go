@@ -24,7 +24,7 @@ type ResXMLTreeNode struct {
 
 type ResXMLTreeNamespaceExt struct {
 	Prefix ResStringPoolRef
-	Uri    ResStringPoolRef
+	URI    ResStringPoolRef
 }
 
 type ResXMLTreeAttrExt struct {
@@ -33,7 +33,7 @@ type ResXMLTreeAttrExt struct {
 	AttributeStart uint16
 	AttributeSize  uint16
 	AttributeCount uint16
-	IdIndex        uint16
+	IDIndex        uint16
 	ClassIndex     uint16
 	StyleIndex     uint16
 }
@@ -129,12 +129,12 @@ func (f *XMLFile) readStartNamespace(sr *io.SectionReader) error {
 	if f.notPrecessedNS == nil {
 		f.notPrecessedNS = make(map[ResStringPoolRef]ResStringPoolRef)
 	}
-	f.notPrecessedNS[namespace.Uri] = namespace.Prefix
+	f.notPrecessedNS[namespace.URI] = namespace.Prefix
 
 	if f.namespaces == nil {
 		f.namespaces = make(map[ResStringPoolRef]ResStringPoolRef)
 	}
-	f.namespaces[namespace.Uri] = namespace.Prefix
+	f.namespaces[namespace.URI] = namespace.Prefix
 
 	return nil
 }
@@ -152,7 +152,7 @@ func (f *XMLFile) readEndNamespace(sr *io.SectionReader) error {
 	if err := binary.Read(sr, binary.LittleEndian, namespace); err != nil {
 		return err
 	}
-	delete(f.namespaces, namespace.Uri)
+	delete(f.namespaces, namespace.URI)
 	return nil
 }
 

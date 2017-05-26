@@ -9,7 +9,7 @@ import (
 	"unsafe"
 )
 
-type ResId uint32
+type ResID uint32
 
 type TableFile struct {
 	stringPool    *ResStringPool
@@ -23,7 +23,7 @@ type ResTableHeader struct {
 
 type ResTablePackage struct {
 	Header         ResChunkHeader
-	Id             uint32
+	ID             uint32
 	Name           [128]uint16
 	TypeStrings    uint32
 	LastPublicType uint32
@@ -40,7 +40,7 @@ type TablePackage struct {
 
 type ResTableType struct {
 	Header       ResChunkHeader
-	Id           uint8
+	ID           uint8
 	Res0         uint8
 	Res1         uint16
 	EntryCount   uint32
@@ -157,42 +157,42 @@ type TableEntry struct {
 
 type ResTableTypeSpec struct {
 	Header     ResChunkHeader
-	Id         uint8
+	ID         uint8
 	Res0       uint8
 	Res1       uint16
 	EntryCount uint32
 }
 
-// IsResId returns whether s is ResId.
-func IsResId(s string) bool {
+// IsResID returns whether s is ResId.
+func IsResID(s string) bool {
 	return strings.HasPrefix(s, "@0x")
 }
 
-// ParseResId parses ResId.
-func ParseResId(s string) (ResId, error) {
-	if !IsResId(s) {
-		return 0, fmt.Errorf("androidbinary: %s is not ResId", s)
+// ParseResID parses ResId.
+func ParseResID(s string) (ResID, error) {
+	if !IsResID(s) {
+		return 0, fmt.Errorf("androidbinary: %s is not ResID", s)
 	}
 	id, err := strconv.ParseUint(s[3:], 16, 32)
 	if err != nil {
 		return 0, err
 	}
-	return ResId(id), nil
+	return ResID(id), nil
 }
 
-func (id ResId) String() string {
+func (id ResID) String() string {
 	return fmt.Sprintf("@0x%08X", uint32(id))
 }
 
-func (id ResId) Package() int {
+func (id ResID) Package() int {
 	return int(id) >> 24
 }
 
-func (id ResId) Type() int {
+func (id ResID) Type() int {
 	return (int(id) >> 16) & 0xFF
 }
 
-func (id ResId) Entry() int {
+func (id ResID) Entry() int {
 	return int(id) & 0xFFFF
 }
 
@@ -223,7 +223,7 @@ func (p *TablePackage) findEntry(typeIndex, entryIndex int, config *ResTableConf
 	var best *TableType
 	for _, t := range p.TableTypes {
 		switch {
-		case int(t.Header.Id) != typeIndex:
+		case int(t.Header.ID) != typeIndex:
 			// nothing to do
 		case !t.Header.Config.Match(config):
 			// nothing to do
@@ -241,7 +241,7 @@ func (p *TablePackage) findEntry(typeIndex, entryIndex int, config *ResTableConf
 	return best.Entries[entryIndex]
 }
 
-func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, error) {
+func (f *TableFile) GetResource(id ResID, config *ResTableConfig) (interface{}, error) {
 	p := f.findPackage(id.Package())
 	if p == nil {
 		return nil, fmt.Errorf("androidbinary: package 0x%02X not found", id.Package())
@@ -290,7 +290,7 @@ func (f *TableFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, err
 	case RES_TABLE_PACKAGE_TYPE:
 		var tablePackage *TablePackage
 		tablePackage, err = readTablePackage(sr)
-		f.tablePackages[tablePackage.Header.Id] = tablePackage
+		f.tablePackages[tablePackage.Header.ID] = tablePackage
 	}
 	if err != nil {
 		return nil, err
