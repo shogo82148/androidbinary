@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"os"
 	"unicode/utf16"
 )
 
@@ -51,10 +50,14 @@ type ResStringPoolHeader struct {
 	StylesStart uint32
 }
 
+type ResStringPoolSpan struct {
+	FirstChar, LastChar uint32
+}
+
 type ResStringPool struct {
 	Header  ResStringPoolHeader
 	Strings []string
-	Styles  []string
+	Styles  []ResStringPoolSpan
 }
 
 const NilResStringPoolRef = ResStringPoolRef(0xFFFFFFFF)
@@ -113,7 +116,9 @@ func readStringPool(sr *io.SectionReader) (*ResStringPool, error) {
 	for i, start := range stringStarts {
 		var str string
 		var err error
-		sr.Seek(int64(sp.Header.StringStart+start), os.SEEK_SET)
+		if _, err := sr.Seek(int64(sp.Header.StringStart+start), seekStart); err != nil {
+			return nil, err
+		}
 		if (sp.Header.Flags & UTF8_FLAG) == 0 {
 			str, err = readUTF16(sr)
 		} else {
@@ -125,20 +130,14 @@ func readStringPool(sr *io.SectionReader) (*ResStringPool, error) {
 		sp.Strings[i] = str
 	}
 
-	sp.Styles = make([]string, sp.Header.StyleCount)
+	sp.Styles = make([]ResStringPoolSpan, sp.Header.StyleCount)
 	for i, start := range styleStarts {
-		var str string
-		var err error
-		sr.Seek(int64(sp.Header.StylesStart+start), os.SEEK_SET)
-		if (sp.Header.Flags & UTF8_FLAG) == 0 {
-			str, err = readUTF16(sr)
-		} else {
-			str, err = readUTF8(sr)
-		}
-		if err != nil {
+		if _, err := sr.Seek(int64(sp.Header.StylesStart+start), seekStart); err != nil {
 			return nil, err
 		}
-		sp.Styles[i] = str
+		if err := binary.Read(sr, binary.LittleEndian, &sp.Styles[i]); err != nil {
+			return nil, err
+		}
 	}
 
 	return sp, nil
@@ -148,7 +147,7 @@ func readUTF16(sr *io.SectionReader) (string, error) {
 	// read lenth of string
 	size, err := readUTF16length(sr)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	// read string value

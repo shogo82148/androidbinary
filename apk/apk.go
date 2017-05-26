@@ -10,16 +10,10 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-	"strings"
-
-	_ "image/jpeg"
-	_ "image/png"
 
 	"github.com/pkg/errors"
 	"github.com/shogo82148/androidbinary"
 )
-
-var DefaultResTableConfig = &androidbinary.ResTableConfig{}
 
 type Apk struct {
 	f         *os.File
@@ -80,7 +74,7 @@ func (k *Apk) Close() error {
 // Icon return icon image
 func (k *Apk) Icon(resConfig *androidbinary.ResTableConfig) (image.Image, error) {
 	iconPath := k.getResource(k.manifest.App.Icon, resConfig)
-	if strings.HasPrefix(iconPath, "@0x") {
+	if androidbinary.IsResId(iconPath) {
 		return nil, errors.New("unable to convert icon-id to icon path")
 	}
 	imgData, err := k.readZipFile(iconPath)
@@ -93,7 +87,7 @@ func (k *Apk) Icon(resConfig *androidbinary.ResTableConfig) (image.Image, error)
 
 func (k *Apk) Label(resConfig *androidbinary.ResTableConfig) (s string, err error) {
 	s = k.getResource(k.manifest.App.Label, resConfig)
-	if strings.HasPrefix(s, "@0x") {
+	if androidbinary.IsResId(s) {
 		err = errors.New("unable to convert label-id to string")
 	}
 	return
@@ -126,7 +120,7 @@ func (k *Apk) parseManifest() error {
 	}
 	xmlfile, err := androidbinary.NewXMLFile(bytes.NewReader(xmlData))
 	if err != nil {
-		return errors.Wrap(err, "parse-axml")
+		return errors.Wrap(err, "parse-xml")
 	}
 	reader := xmlfile.Reader()
 	data, err := ioutil.ReadAll(reader)
@@ -146,15 +140,11 @@ func (k *Apk) parseResources() (err error) {
 }
 
 func (k *Apk) getResource(id string, resConfig *androidbinary.ResTableConfig) string {
-	if resConfig == nil {
-		resConfig = DefaultResTableConfig
-	}
-	var resId uint32
-	_, err := fmt.Sscanf(id, "@0x%x", &resId)
+	resID, err := androidbinary.ParseResId(id)
 	if err != nil {
 		return id
 	}
-	val, err := k.table.GetResource(androidbinary.ResId(resId), resConfig)
+	val, err := k.table.GetResource(resID, resConfig)
 	if err != nil {
 		return id
 	}

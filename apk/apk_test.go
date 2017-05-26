@@ -1,6 +1,8 @@
 package apk
 
 import (
+	_ "image/jpeg"
+	_ "image/png"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

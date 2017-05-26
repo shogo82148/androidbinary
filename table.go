@@ -2,10 +2,10 @@ package androidbinary
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
-	"os"
+	"strconv"
+	"strings"
 	"unsafe"
 )
 
@@ -163,6 +163,27 @@ type ResTableTypeSpec struct {
 	EntryCount uint32
 }
 
+// IsResId returns whether s is ResId.
+func IsResId(s string) bool {
+	return strings.HasPrefix(s, "@0x")
+}
+
+// ParseResId parses ResId.
+func ParseResId(s string) (ResId, error) {
+	if !IsResId(s) {
+		return 0, fmt.Errorf("androidbinary: %s is not ResId", s)
+	}
+	id, err := strconv.ParseUint(s[3:], 16, 32)
+	if err != nil {
+		return 0, err
+	}
+	return ResId(id), nil
+}
+
+func (id ResId) String() string {
+	return fmt.Sprintf("@0x%08X", uint32(id))
+}
+
 func (id ResId) Package() int {
 	return int(id) >> 24
 }
@@ -198,29 +219,37 @@ func (f *TableFile) findPackage(id int) *TablePackage {
 	return f.tablePackages[uint32(id)]
 }
 
-func (p *TablePackage) findType(id int, config *ResTableConfig) *TableType {
+func (p *TablePackage) findEntry(typeIndex, entryIndex int, config *ResTableConfig) TableEntry {
 	var best *TableType
 	for _, t := range p.TableTypes {
-		if int(t.Header.Id) != id {
-			continue
-		}
-		if !t.Header.Config.Match(config) {
-			continue
-		}
-		if best == nil || t.Header.Config.IsBetterThan(&best.Header.Config, config) {
+		switch {
+		case int(t.Header.Id) != typeIndex:
+			// nothing to do
+		case !t.Header.Config.Match(config):
+			// nothing to do
+		case entryIndex >= len(t.Entries):
+			// nothing to do
+		case t.Entries[entryIndex].Value == nil:
+			// nothing to do
+		case best == nil || t.Header.Config.IsBetterThan(&best.Header.Config, config):
 			best = t
 		}
 	}
-	return best
+	if best == nil || entryIndex >= len(best.Entries) {
+		return TableEntry{}
+	}
+	return best.Entries[entryIndex]
 }
 
 func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, error) {
 	p := f.findPackage(id.Package())
-	t := p.findType(id.Type(), config)
-	e := t.Entries[id.Entry()]
+	if p == nil {
+		return nil, fmt.Errorf("androidbinary: package 0x%02X not found", id.Package())
+	}
+	e := p.findEntry(id.Type(), id.Entry(), config)
 	v := e.Value
 	if v == nil {
-		return nil, errors.New("get resource error")
+		return nil, fmt.Errorf("androidbinary: entry 0x%04X not found", id.Entry())
 	}
 	switch v.DataType {
 	case TYPE_NULL:
@@ -244,13 +273,17 @@ func (f *TableFile) GetString(ref ResStringPoolRef) string {
 func (f *TableFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
 	sr := io.NewSectionReader(r, offset, 1<<63-1-offset)
 	chunkHeader := &ResChunkHeader{}
-	sr.Seek(0, os.SEEK_SET)
+	if _, err := sr.Seek(0, seekStart); err != nil {
+		return nil, err
+	}
 	if err := binary.Read(sr, binary.LittleEndian, chunkHeader); err != nil {
 		return nil, err
 	}
 
 	var err error
-	sr.Seek(0, os.SEEK_SET)
+	if _, err := sr.Seek(0, seekStart); err != nil {
+		return nil, err
+	}
 	switch chunkHeader.Type {
 	case RES_STRING_POOL_TYPE:
 		f.stringPool, err = readStringPool(sr)
@@ -291,14 +324,18 @@ func readTablePackage(sr *io.SectionReader) (*TablePackage, error) {
 	offset := int64(header.Header.HeaderSize)
 	for offset < int64(header.Header.Size) {
 		chunkHeader := &ResChunkHeader{}
-		sr.Seek(offset, os.SEEK_SET)
+		if _, err := sr.Seek(offset, seekStart); err != nil {
+			return nil, err
+		}
 		if err := binary.Read(sr, binary.LittleEndian, chunkHeader); err != nil {
 			return nil, err
 		}
 
 		var err error
 		chunkReader := io.NewSectionReader(sr, offset, int64(chunkHeader.Size))
-		sr.Seek(offset, os.SEEK_SET)
+		if _, err := sr.Seek(offset, seekStart); err != nil {
+			return nil, err
+		}
 		switch chunkHeader.Type {
 		case RES_TABLE_TYPE_TYPE:
 			var tableType *TableType
@@ -319,7 +356,9 @@ func readTablePackage(sr *io.SectionReader) (*TablePackage, error) {
 func readTableType(chunkHeader *ResChunkHeader, sr *io.SectionReader) (*TableType, error) {
 	// TableType header may be omitted
 	header := new(ResTableType)
-	sr.Seek(0, os.SEEK_SET)
+	if _, err := sr.Seek(0, seekStart); err != nil {
+		return nil, err
+	}
 	buf, err := newZeroFilledReader(sr, int64(chunkHeader.HeaderSize), int64(unsafe.Sizeof(*header)))
 	if err != nil {
 		return nil, err
@@ -329,7 +368,9 @@ func readTableType(chunkHeader *ResChunkHeader, sr *io.SectionReader) (*TableTyp
 	}
 
 	entryIndexes := make([]uint32, header.EntryCount)
-	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if _, err := sr.Seek(int64(header.Header.HeaderSize), seekStart); err != nil {
+		return nil, err
+	}
 	if err := binary.Read(sr, binary.LittleEndian, entryIndexes); err != nil {
 		return nil, err
 	}
@@ -339,7 +380,9 @@ func readTableType(chunkHeader *ResChunkHeader, sr *io.SectionReader) (*TableTyp
 		if index == 0xFFFFFFFF {
 			continue
 		}
-		sr.Seek(int64(header.EntriesStart+index), os.SEEK_SET)
+		if _, err := sr.Seek(int64(header.EntriesStart+index), seekStart); err != nil {
+			return nil, err
+		}
 		var key ResTableEntry
 		binary.Read(sr, binary.LittleEndian, &key)
 		entries[i].Key = &key
@@ -361,7 +404,9 @@ func readTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
 	}
 
 	flags := make([]uint32, header.EntryCount)
-	sr.Seek(int64(header.Header.HeaderSize), os.SEEK_SET)
+	if _, err := sr.Seek(int64(header.Header.HeaderSize), seekStart); err != nil {
+		return nil, err
+	}
 	if err := binary.Read(sr, binary.LittleEndian, flags); err != nil {
 		return nil, err
 	}
@@ -369,6 +414,14 @@ func readTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
 }
 
 func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
+	// nil ResTableConfig is never more specific than any ResTableConfig
+	if c == nil {
+		return false
+	}
+	if o == nil {
+		return false
+	}
+
 	// imsi
 	if c.Mcc != o.Mcc {
 		if c.Mcc == 0 {
@@ -388,21 +441,10 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	}
 
 	// locale
-	if c.Language[0] != o.Language[0] {
-		if c.Language[0] == 0 {
-			return false
-		}
-		if o.Language[0] == 0 {
-			return true
-		}
-	}
-	if c.Country[0] != o.Country[0] {
-		if c.Country[0] == 0 {
-			return false
-		}
-		if o.Country[0] == 0 {
-			return true
-		}
+	if diff := c.IsLocaleMoreSpecificThan(o); diff < 0 {
+		return false
+	} else if diff > 0 {
+		return true
 	}
 
 	// screen layout
@@ -600,6 +642,14 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		return c.IsMoreSpecificThan(o)
 	}
 
+	// nil ResTableConfig is never better than any ResTableConfig
+	if c == nil {
+		return false
+	}
+	if o == nil {
+		return false
+	}
+
 	// imsi
 	if c.Mcc != 0 || c.Mnc != 0 || o.Mcc != 0 || o.Mnc != 0 {
 		if c.Mcc != o.Mcc && r.Mcc != 0 {
@@ -611,13 +661,8 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	}
 
 	// locale
-	if c.Language[0] != 0 || c.Country[0] != 0 || o.Language[0] != 0 || o.Country[0] != 0 {
-		if c.Language[0] != o.Language[0] && r.Language[0] != 0 {
-			return c.Language[0] != 0
-		}
-		if c.Country[0] != o.Country[0] && r.Country[0] != 0 {
-			return c.Country[0] != 0
-		}
+	if c.IsLocaleBetterThan(o, r) {
+		return true
 	}
 
 	// screen layout
@@ -670,9 +715,8 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 			}
 			if fixedMySL == fixedOSL {
 				return mySL != 0
-			} else {
-				return fixedMySL > fixedOSL
 			}
+			return fixedMySL > fixedOSL
 		}
 
 		if ((c.ScreenLayout^o.ScreenLayout)&MASK_SCREENLONG) != 0 &&
@@ -725,9 +769,8 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 		}
 		if (2*l-reqValue)*h > reqValue*reqValue {
 			return !blmBigger
-		} else {
-			return blmBigger
 		}
+		return blmBigger
 	}
 	if c.Touchscreen != o.Touchscreen && r.Touchscreen != 0 {
 		return c.Touchscreen != 0
@@ -787,7 +830,7 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	}
 
 	// version
-	if c.SDKVersion != 0 || c.SDKVersion != 0 || o.MinorVersion != 0 || o.MinorVersion != 0 {
+	if c.SDKVersion != 0 || o.MinorVersion != 0 {
 		if c.SDKVersion != o.SDKVersion && r.SDKVersion != 0 {
 			return c.SDKVersion > o.SDKVersion
 		}
@@ -799,7 +842,72 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	return false
 }
 
+func (c *ResTableConfig) IsLocaleMoreSpecificThan(o *ResTableConfig) int {
+	if (c.Language != [2]uint8{} || c.Country != [2]uint8{}) || (o.Language != [2]uint8{} || o.Country != [2]uint8{}) {
+		if c.Language != o.Language {
+			if c.Language == [2]uint8{} {
+				return -1
+			}
+			if o.Language == [2]uint8{} {
+				return 1
+			}
+		}
+
+		if c.Country != o.Country {
+			if c.Country == [2]uint8{} {
+				return -1
+			}
+			if o.Country == [2]uint8{} {
+				return 1
+			}
+		}
+	}
+	return 0
+}
+
+func (c *ResTableConfig) IsLocaleBetterThan(o *ResTableConfig, r *ResTableConfig) bool {
+	if r.Language == [2]uint8{} && r.Country == [2]uint8{} {
+		// The request doesn't have a locale, so no resource is better
+		// than the other.
+		return false
+	}
+
+	if c.Language == [2]uint8{} && c.Country == [2]uint8{} && o.Language == [2]uint8{} && o.Country == [2]uint8{} {
+		// The locales parts of both resources are empty, so no one is better
+		// than the other.
+		return false
+	}
+
+	if c.Language != o.Language {
+		// The languages of the two resources are not the same.
+
+		// the US English resource have traditionally lived for most apps.
+		if r.Language == [2]uint8{'e', 'n'} {
+			if r.Country == [2]uint8{'U', 'S'} {
+				if c.Language != [2]uint8{} {
+					return c.Country == [2]uint8{} || c.Country == [2]uint8{'U', 'S'}
+				}
+				return !(c.Country == [2]uint8{} || c.Country == [2]uint8{'U', 'S'})
+			}
+		}
+		return c.Language != [2]uint8{}
+	}
+
+	if c.Country != o.Country {
+		return c.Country != [2]uint8{}
+	}
+
+	return false
+}
+
 func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
+	// nil ResTableConfig always matches.
+	if settings == nil {
+		return true
+	} else if c == nil {
+		return *settings == ResTableConfig{}
+	}
+
 	// match imsi
 	if settings.Mcc == 0 {
 		if c.Mcc != 0 {
@@ -821,13 +929,19 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	}
 
 	// match locale
-	if settings.Language[0] != 0 && c.Language[0] != 0 &&
-		!(settings.Language[0] == c.Language[0] && settings.Language[1] == c.Language[1]) {
-		return false
-	}
-	if settings.Country[0] != 0 && c.Country[0] != 0 &&
-		!(settings.Country[0] == c.Country[0] && settings.Country[1] == c.Country[1]) {
-		return false
+	if c.Language != [2]uint8{0, 0} {
+		// Don't consider country and variants when deciding matches.
+		// If two configs differ only in their country and variant,
+		// they can be weeded out in the isMoreSpecificThan test.
+		if c.Language != settings.Language {
+			return false
+		}
+
+		if c.Country != [2]uint8{0, 0} {
+			if c.Country != settings.Country {
+				return false
+			}
+		}
 	}
 
 	// screen layout
