@@ -9,18 +9,22 @@ import (
 	"unsafe"
 )
 
+// ResID is ID for resources.
 type ResID uint32
 
+// TableFile is a resrouce table file.
 type TableFile struct {
 	stringPool    *ResStringPool
 	tablePackages map[uint32]*TablePackage
 }
 
+// ResTableHeader is a header of TableFile.
 type ResTableHeader struct {
 	Header       ResChunkHeader
 	PackageCount uint32
 }
 
+// ResTablePackage is a header of table packages.
 type ResTablePackage struct {
 	Header         ResChunkHeader
 	ID             uint32
@@ -31,6 +35,7 @@ type ResTablePackage struct {
 	LastPublicKey  uint32
 }
 
+// TablePackage is a table package.
 type TablePackage struct {
 	Header      ResTablePackage
 	TypeStrings *ResStringPool
@@ -38,6 +43,7 @@ type TablePackage struct {
 	TableTypes  []*TableType
 }
 
+// ResTableType is a type of a table.
 type ResTableType struct {
 	Header       ResChunkHeader
 	ID           uint8
@@ -99,6 +105,7 @@ const (
 	NAVHIDDEN_YES  = 0x08
 )
 
+// ResTableConfig is a configuration of a table.
 type ResTableConfig struct {
 	Size uint32
 	// imsi
@@ -138,23 +145,27 @@ type ResTableConfig struct {
 	ScreenHeightDp uint16
 }
 
+// TableType is a collection of resource entries for a particular resource data type.
 type TableType struct {
 	Header  *ResTableType
 	Entries []TableEntry
 }
 
+// ResTableEntry is the beginning of information about an entry in the resource table.
 type ResTableEntry struct {
 	Size  uint16
 	Flags uint16
 	Key   ResStringPoolRef
 }
 
+// TableEntry is a entry in a recource table.
 type TableEntry struct {
 	Key   *ResTableEntry
 	Value *ResValue
 	Flags uint32
 }
 
+// ResTableTypeSpec is specification of the resources defined by a particular type.
 type ResTableTypeSpec struct {
 	Header     ResChunkHeader
 	ID         uint8
@@ -184,18 +195,22 @@ func (id ResID) String() string {
 	return fmt.Sprintf("@0x%08X", uint32(id))
 }
 
+// Package returns the package index of id.
 func (id ResID) Package() int {
 	return int(id) >> 24
 }
 
+// Type returns the type index of id.
 func (id ResID) Type() int {
 	return (int(id) >> 16) & 0xFF
 }
 
+// Entry returns the entry index of id.
 func (id ResID) Entry() int {
 	return int(id) & 0xFFFF
 }
 
+// NewTableFile returns new TableFile.
 func NewTableFile(r io.ReaderAt) (*TableFile, error) {
 	f := new(TableFile)
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
@@ -241,6 +256,7 @@ func (p *TablePackage) findEntry(typeIndex, entryIndex int, config *ResTableConf
 	return best.Entries[entryIndex]
 }
 
+// GetResource returns a resrouce referenced by id.
 func (f *TableFile) GetResource(id ResID, config *ResTableConfig) (interface{}, error) {
 	p := f.findPackage(id.Package())
 	if p == nil {
@@ -266,6 +282,7 @@ func (f *TableFile) GetResource(id ResID, config *ResTableConfig) (interface{}, 
 	return v.Data, nil
 }
 
+// GetString returns a string referenced by ref.
 func (f *TableFile) GetString(ref ResStringPoolRef) string {
 	return f.stringPool.GetString(ref)
 }
@@ -413,6 +430,7 @@ func readTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
 	return flags, nil
 }
 
+// IsMoreSpecificThan returns true if c is more specific than o.
 func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	// nil ResTableConfig is never more specific than any ResTableConfig
 	if c == nil {
@@ -637,6 +655,7 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	return false
 }
 
+// IsBetterThan returns true if c is better than o for the r configuration.
 func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool {
 	if r == nil {
 		return c.IsMoreSpecificThan(o)
@@ -842,6 +861,9 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	return false
 }
 
+// IsLocaleMoreSpecificThan a positive integer if this config is more specific than o,
+// a negative integer if |o| is more specific
+// and 0 if they're equally specific.
 func (c *ResTableConfig) IsLocaleMoreSpecificThan(o *ResTableConfig) int {
 	if (c.Language != [2]uint8{} || c.Country != [2]uint8{}) || (o.Language != [2]uint8{} || o.Country != [2]uint8{}) {
 		if c.Language != o.Language {
@@ -865,6 +887,7 @@ func (c *ResTableConfig) IsLocaleMoreSpecificThan(o *ResTableConfig) int {
 	return 0
 }
 
+// IsLocaleBetterThan returns true if c is a better locale match than o for the r configuration.
 func (c *ResTableConfig) IsLocaleBetterThan(o *ResTableConfig, r *ResTableConfig) bool {
 	if r.Language == [2]uint8{} && r.Country == [2]uint8{} {
 		// The request doesn't have a locale, so no resource is better
@@ -900,6 +923,7 @@ func (c *ResTableConfig) IsLocaleBetterThan(o *ResTableConfig, r *ResTableConfig
 	return false
 }
 
+// Match returns true if c can be considered a match for the parameters in settings.
 func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	// nil ResTableConfig always matches.
 	if settings == nil {
@@ -1045,6 +1069,7 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	return true
 }
 
+// Locale returns the locale of the configuration.
 func (c *ResTableConfig) Locale() string {
 	if c.Language[0] == 0 {
 		return ""

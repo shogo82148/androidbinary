@@ -15,6 +15,7 @@ import (
 	"github.com/shogo82148/androidbinary"
 )
 
+// Apk is an application package file for android.
 type Apk struct {
 	f         *os.File
 	zipreader *zip.Reader
@@ -71,7 +72,7 @@ func (k *Apk) Close() error {
 	return k.f.Close()
 }
 
-// Icon return icon image
+// Icon returns the icon image of the APK.
 func (k *Apk) Icon(resConfig *androidbinary.ResTableConfig) (image.Image, error) {
 	iconPath := k.getResource(k.manifest.App.Icon, resConfig)
 	if androidbinary.IsResID(iconPath) {
@@ -85,6 +86,7 @@ func (k *Apk) Icon(resConfig *androidbinary.ResTableConfig) (image.Image, error)
 	return m, err
 }
 
+// Label returns the label of the APK.
 func (k *Apk) Label(resConfig *androidbinary.ResTableConfig) (s string, err error) {
 	s = k.getResource(k.manifest.App.Label, resConfig)
 	if androidbinary.IsResID(s) {
@@ -93,14 +95,17 @@ func (k *Apk) Label(resConfig *androidbinary.ResTableConfig) (s string, err erro
 	return
 }
 
+// Manifest returns the manifest of the APK.
 func (k *Apk) Manifest() Manifest {
 	return k.manifest
 }
 
+// PackageName returns the package name of the APK.
 func (k *Apk) PackageName() string {
 	return k.manifest.Package
 }
 
+// MainAcitivty returns the name of the main activity.
 func (k *Apk) MainAcitivty() (activity string, err error) {
 	for _, act := range k.manifest.App.Activity {
 		for _, intent := range act.IntentFilter {

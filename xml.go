@@ -8,6 +8,7 @@ import (
 	"io"
 )
 
+// XMLFile is an XML file expressed in binary format.
 type XMLFile struct {
 	stringPool     *ResStringPool
 	resourceMap    []uint32
@@ -16,17 +17,20 @@ type XMLFile struct {
 	xmlBuffer      bytes.Buffer
 }
 
+// ResXMLTreeNode is basic XML tree node.
 type ResXMLTreeNode struct {
 	Header     ResChunkHeader
 	LineNumber uint32
 	Comment    ResStringPoolRef
 }
 
+// ResXMLTreeNamespaceExt is extended XML tree node for namespace start/end nodes.
 type ResXMLTreeNamespaceExt struct {
 	Prefix ResStringPoolRef
 	URI    ResStringPoolRef
 }
 
+// ResXMLTreeAttrExt is extended XML tree node for start tags -- includes attribute.
 type ResXMLTreeAttrExt struct {
 	NS             ResStringPoolRef
 	Name           ResStringPoolRef
@@ -38,6 +42,7 @@ type ResXMLTreeAttrExt struct {
 	StyleIndex     uint16
 }
 
+// ResXMLTreeAttribute is an attribute of start tags.
 type ResXMLTreeAttribute struct {
 	NS         ResStringPoolRef
 	Name       ResStringPoolRef
@@ -45,11 +50,13 @@ type ResXMLTreeAttribute struct {
 	TypedValue ResValue
 }
 
+// ResXMLTreeEndElementExt is extended XML tree node for element start/end nodes.
 type ResXMLTreeEndElementExt struct {
 	NS   ResStringPoolRef
 	Name ResStringPoolRef
 }
 
+// NewXMLFile returns a new XMLFile.
 func NewXMLFile(r io.ReaderAt) (*XMLFile, error) {
 	f := new(XMLFile)
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
@@ -71,6 +78,7 @@ func NewXMLFile(r io.ReaderAt) (*XMLFile, error) {
 	return f, nil
 }
 
+// Reader returns a reader of XML file expressed in text format.
 func (f *XMLFile) Reader() *bytes.Reader {
 	return bytes.NewReader(f.xmlBuffer.Bytes())
 }
@@ -108,6 +116,7 @@ func (f *XMLFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error
 	return chunkHeader, nil
 }
 
+// GetString returns a string referenced by ref.
 func (f *XMLFile) GetString(ref ResStringPoolRef) string {
 	return f.stringPool.GetString(ref)
 }

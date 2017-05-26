@@ -32,6 +32,7 @@ const (
 	RES_TABLE_TYPE_SPEC_TYPE = 0x0202
 )
 
+// ResChunkHeader is a header of a resource chunk.
 type ResChunkHeader struct {
 	Type       uint16
 	HeaderSize uint16
@@ -62,6 +63,7 @@ type ResStringPool struct {
 
 const NilResStringPoolRef = ResStringPoolRef(0xFFFFFFFF)
 
+// ResStringPoolRef is a type representing a reference to a string.
 type ResStringPoolRef uint32
 
 const (
@@ -85,6 +87,7 @@ const (
 	TYPE_LAST_INT        = 0x1f
 )
 
+// ResValue is a representation of a value in a resource
 type ResValue struct {
 	Size     uint16
 	Res0     uint8
@@ -92,6 +95,7 @@ type ResValue struct {
 	Data     uint32
 }
 
+// GetString returns a string referenced by ref.
 func (pool *ResStringPool) GetString(ref ResStringPoolRef) string {
 	return pool.Strings[int(ref)]
 }
