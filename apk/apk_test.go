@@ -24,7 +24,7 @@ func TestGetIcon(t *testing.T) {
 	assert.Equal(t, apk.PackageName(), "com.example.helloworld")
 
 	manifest := apk.Manifest()
-	assert.Equal(t, manifest.Sdk.Target, 24)
+	assert.Equal(t, manifest.SDK.Target, 24)
 
 	mainActivity, err := apk.MainAcitivty()
 	assert.NoError(t, err)

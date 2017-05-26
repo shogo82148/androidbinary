@@ -98,15 +98,15 @@ func (f *XMLFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error
 		return nil, err
 	}
 	switch chunkHeader.Type {
-	case RES_STRING_POOL_TYPE:
+	case ResStringPoolChunkType:
 		f.stringPool, err = readStringPool(sr)
-	case RES_XML_START_NAMESPACE_TYPE:
+	case ResXMLStartNamespaceType:
 		err = f.readStartNamespace(sr)
-	case RES_XML_END_NAMESPACE_TYPE:
+	case ResXMLEndNamespaceType:
 		err = f.readEndNamespace(sr)
-	case RES_XML_START_ELEMENT_TYPE:
+	case ResXMLStartElementType:
 		err = f.readStartElement(sr)
-	case RES_XML_END_ELEMENT_TYPE:
+	case ResXMLEndElementType:
 		err = f.readEndElement(sr)
 	}
 	if err != nil {
@@ -214,15 +214,15 @@ func (f *XMLFile) readStartElement(sr *io.SectionReader) error {
 		} else {
 			data := attr.TypedValue.Data
 			switch attr.TypedValue.DataType {
-			case TYPE_NULL:
+			case TypeNull:
 				value = ""
-			case TYPE_REFERENCE:
+			case TypeReference:
 				value = fmt.Sprintf("@0x%08X", data)
-			case TYPE_INT_DEC:
+			case TypeIntDec:
 				value = fmt.Sprintf("%d", data)
-			case TYPE_INT_HEX:
+			case TypeIntHex:
 				value = fmt.Sprintf("0x%08X", data)
-			case TYPE_INT_BOOLEAN:
+			case TypeIntBoolean:
 				if data != 0 {
 					value = "true"
 				} else {
