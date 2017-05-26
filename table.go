@@ -9,21 +9,25 @@ import (
 	"unsafe"
 )
 
-type ResId uint32
+// ResID is ID for resources.
+type ResID uint32
 
+// TableFile is a resrouce table file.
 type TableFile struct {
 	stringPool    *ResStringPool
 	tablePackages map[uint32]*TablePackage
 }
 
+// ResTableHeader is a header of TableFile.
 type ResTableHeader struct {
 	Header       ResChunkHeader
 	PackageCount uint32
 }
 
+// ResTablePackage is a header of table packages.
 type ResTablePackage struct {
 	Header         ResChunkHeader
-	Id             uint32
+	ID             uint32
 	Name           [128]uint16
 	TypeStrings    uint32
 	LastPublicType uint32
@@ -31,6 +35,7 @@ type ResTablePackage struct {
 	LastPublicKey  uint32
 }
 
+// TablePackage is a table package.
 type TablePackage struct {
 	Header      ResTablePackage
 	TypeStrings *ResStringPool
@@ -38,9 +43,10 @@ type TablePackage struct {
 	TableTypes  []*TableType
 }
 
+// ResTableType is a type of a table.
 type ResTableType struct {
 	Header       ResChunkHeader
-	Id           uint8
+	ID           uint8
 	Res0         uint8
 	Res1         uint16
 	EntryCount   uint32
@@ -48,57 +54,67 @@ type ResTableType struct {
 	Config       ResTableConfig
 }
 
+// ScreenLayout describes screen layout.
+type ScreenLayout uint8
+
 // ScreenLayout bits
 const (
-	MASK_SCREENSIZE   = 0x0f
-	SCREENSIZE_ANY    = 0x01
-	SCREENSIZE_SMALL  = 0x02
-	SCREENSIZE_NORMAL = 0x03
-	SCREENSIZE_LARGE  = 0x04
-	SCREENSIZE_XLARGE = 0x05
+	MaskScreenSize   ScreenLayout = 0x0f
+	ScreenSizeAny    ScreenLayout = 0x01
+	ScreenSizeSmall  ScreenLayout = 0x02
+	ScreenSizeNormal ScreenLayout = 0x03
+	ScreenSizeLarge  ScreenLayout = 0x04
+	ScreenSizeXLarge ScreenLayout = 0x05
 
-	MASK_SCREENLONG  = 0x30
-	SHIFT_SCREENLONG = 4
-	SCREENLONG_ANY   = 0x00
-	SCREENLONG_NO    = 0x10
-	SCREENLONG_YES   = 0x20
+	MaskScreenLong  ScreenLayout = 0x30
+	ShiftScreenLong              = 4
+	ScreenLongAny   ScreenLayout = 0x00
+	ScreenLongNo    ScreenLayout = 0x10
+	ScreenLongYes   ScreenLayout = 0x20
 
-	MASK_LAYOUTDIR  = 0xC0
-	SHIFT_LAYOUTDIR = 6
-	LAYOUTDIR_ANY   = 0x00
-	LAYOUTDIR_LTR   = 0x40
-	LAYOUTDIR_RTL   = 0x80
+	MaskLayoutDir  ScreenLayout = 0xC0
+	ShiftLayoutDir              = 6
+	LayoutDirAny   ScreenLayout = 0x00
+	LayoutDirLTR   ScreenLayout = 0x40
+	LayoutDirRTL   ScreenLayout = 0x80
 )
+
+// UIMode describes UI mode.
+type UIMode uint8
 
 // UIMode bits
 const (
-	MASK_UI_MODE_TYPE   = 0x0f
-	UI_MODE_TYPE_ANY    = 0x01
-	UI_MODE_TYPE_NORMAL = 0x02
-	UI_MODE_TYPE_DESK   = 0x03
-	UI_MODE_TYPE_CAR    = 0x04
+	MaskUIModeType   UIMode = 0x0f
+	UIModeTypeAny    UIMode = 0x01
+	UIModeTypeNormal UIMode = 0x02
+	UIModeTypeDesk   UIMode = 0x03
+	UIModeTypeCar    UIMode = 0x04
 
-	MASK_UI_MODE_NIGHT  = 0x30
-	SHIFT_UI_MODE_NIGHT = 4
-	UI_MODE_NIGHT_ANY   = 0x00
-	UI_MODE_NIGHT_NO    = 0x10
-	UI_MODE_NIGHT_YES   = 0x20
+	MaskUIModeNight  UIMode = 0x30
+	ShiftUIModeNight        = 4
+	UIModeNightAny   UIMode = 0x00
+	UIModeNightNo    UIMode = 0x10
+	UIModeNightYes   UIMode = 0x20
 )
+
+// InputFlags are input flags.
+type InputFlags uint8
 
 // input flags
 const (
-	MASK_KEYSHIDDEN = 0x03
-	KEYSHIDDEN_ANY  = 0x00
-	KEYSHIDDEN_NO   = 0x01
-	KEYSHIDDEN_YES  = 0x02
-	KEYSHIDDEN_SOFT = 0x03
+	MaskKeysHidden InputFlags = 0x03
+	KeysHiddenAny  InputFlags = 0x00
+	KeysHiddenNo   InputFlags = 0x01
+	KeysHiddenYes  InputFlags = 0x02
+	KeysHiddenSoft InputFlags = 0x03
 
-	MASK_NAVHIDDEN = 0x0c
-	NAVHIDDEN_ANY  = 0x00
-	NAVHIDDEN_NO   = 0x04
-	NAVHIDDEN_YES  = 0x08
+	MaskNavHidden InputFlags = 0x0c
+	NavHiddenAny  InputFlags = 0x00
+	NavHiddenNo   InputFlags = 0x04
+	NavHiddenYes  InputFlags = 0x08
 )
 
+// ResTableConfig is a configuration of a table.
 type ResTableConfig struct {
 	Size uint32
 	// imsi
@@ -117,7 +133,7 @@ type ResTableConfig struct {
 	// inout
 	Keyboard   uint8
 	Navigation uint8
-	InputFlags uint8
+	InputFlags InputFlags
 	InputPad0  uint8
 
 	// screen size
@@ -129,8 +145,8 @@ type ResTableConfig struct {
 	MinorVersion uint16
 
 	// screen config
-	ScreenLayout          uint8
-	UIMode                uint8
+	ScreenLayout          ScreenLayout
+	UIMode                UIMode
 	SmallestScreenWidthDp uint16
 
 	// screen size dp
@@ -138,64 +154,72 @@ type ResTableConfig struct {
 	ScreenHeightDp uint16
 }
 
+// TableType is a collection of resource entries for a particular resource data type.
 type TableType struct {
 	Header  *ResTableType
 	Entries []TableEntry
 }
 
+// ResTableEntry is the beginning of information about an entry in the resource table.
 type ResTableEntry struct {
 	Size  uint16
 	Flags uint16
 	Key   ResStringPoolRef
 }
 
+// TableEntry is a entry in a recource table.
 type TableEntry struct {
 	Key   *ResTableEntry
 	Value *ResValue
 	Flags uint32
 }
 
+// ResTableTypeSpec is specification of the resources defined by a particular type.
 type ResTableTypeSpec struct {
 	Header     ResChunkHeader
-	Id         uint8
+	ID         uint8
 	Res0       uint8
 	Res1       uint16
 	EntryCount uint32
 }
 
-// IsResId returns whether s is ResId.
-func IsResId(s string) bool {
+// IsResID returns whether s is ResId.
+func IsResID(s string) bool {
 	return strings.HasPrefix(s, "@0x")
 }
 
-// ParseResId parses ResId.
-func ParseResId(s string) (ResId, error) {
-	if !IsResId(s) {
-		return 0, fmt.Errorf("androidbinary: %s is not ResId", s)
+// ParseResID parses ResId.
+func ParseResID(s string) (ResID, error) {
+	if !IsResID(s) {
+		return 0, fmt.Errorf("androidbinary: %s is not ResID", s)
 	}
 	id, err := strconv.ParseUint(s[3:], 16, 32)
 	if err != nil {
 		return 0, err
 	}
-	return ResId(id), nil
+	return ResID(id), nil
 }
 
-func (id ResId) String() string {
+func (id ResID) String() string {
 	return fmt.Sprintf("@0x%08X", uint32(id))
 }
 
-func (id ResId) Package() int {
+// Package returns the package index of id.
+func (id ResID) Package() int {
 	return int(id) >> 24
 }
 
-func (id ResId) Type() int {
+// Type returns the type index of id.
+func (id ResID) Type() int {
 	return (int(id) >> 16) & 0xFF
 }
 
-func (id ResId) Entry() int {
+// Entry returns the entry index of id.
+func (id ResID) Entry() int {
 	return int(id) & 0xFFFF
 }
 
+// NewTableFile returns new TableFile.
 func NewTableFile(r io.ReaderAt) (*TableFile, error) {
 	f := new(TableFile)
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
@@ -223,7 +247,7 @@ func (p *TablePackage) findEntry(typeIndex, entryIndex int, config *ResTableConf
 	var best *TableType
 	for _, t := range p.TableTypes {
 		switch {
-		case int(t.Header.Id) != typeIndex:
+		case int(t.Header.ID) != typeIndex:
 			// nothing to do
 		case !t.Header.Config.Match(config):
 			// nothing to do
@@ -241,7 +265,8 @@ func (p *TablePackage) findEntry(typeIndex, entryIndex int, config *ResTableConf
 	return best.Entries[entryIndex]
 }
 
-func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, error) {
+// GetResource returns a resrouce referenced by id.
+func (f *TableFile) GetResource(id ResID, config *ResTableConfig) (interface{}, error) {
 	p := f.findPackage(id.Package())
 	if p == nil {
 		return nil, fmt.Errorf("androidbinary: package 0x%02X not found", id.Package())
@@ -252,20 +277,21 @@ func (f *TableFile) GetResource(id ResId, config *ResTableConfig) (interface{}, 
 		return nil, fmt.Errorf("androidbinary: entry 0x%04X not found", id.Entry())
 	}
 	switch v.DataType {
-	case TYPE_NULL:
+	case TypeNull:
 		return nil, nil
-	case TYPE_STRING:
+	case TypeString:
 		return f.GetString(ResStringPoolRef(v.Data)), nil
-	case TYPE_INT_DEC:
+	case TypeIntDec:
 		return v.Data, nil
-	case TYPE_INT_HEX:
+	case TypeIntHex:
 		return v.Data, nil
-	case TYPE_INT_BOOLEAN:
+	case TypeIntBoolean:
 		return v.Data != 0, nil
 	}
 	return v.Data, nil
 }
 
+// GetString returns a string referenced by ref.
 func (f *TableFile) GetString(ref ResStringPoolRef) string {
 	return f.stringPool.GetString(ref)
 }
@@ -285,12 +311,12 @@ func (f *TableFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, err
 		return nil, err
 	}
 	switch chunkHeader.Type {
-	case RES_STRING_POOL_TYPE:
+	case ResStringPoolChunkType:
 		f.stringPool, err = readStringPool(sr)
-	case RES_TABLE_PACKAGE_TYPE:
+	case ResTablePackageType:
 		var tablePackage *TablePackage
 		tablePackage, err = readTablePackage(sr)
-		f.tablePackages[tablePackage.Header.Id] = tablePackage
+		f.tablePackages[tablePackage.Header.ID] = tablePackage
 	}
 	if err != nil {
 		return nil, err
@@ -337,11 +363,11 @@ func readTablePackage(sr *io.SectionReader) (*TablePackage, error) {
 			return nil, err
 		}
 		switch chunkHeader.Type {
-		case RES_TABLE_TYPE_TYPE:
+		case ResTableTypeType:
 			var tableType *TableType
 			tableType, err = readTableType(chunkHeader, chunkReader)
 			tablePackage.TableTypes = append(tablePackage.TableTypes, tableType)
-		case RES_TABLE_TYPE_SPEC_TYPE:
+		case ResTableTypeSpecType:
 			_, err = readTableTypeSpec(chunkReader)
 		}
 		if err != nil {
@@ -413,6 +439,7 @@ func readTableTypeSpec(sr *io.SectionReader) ([]uint32, error) {
 	return flags, nil
 }
 
+// IsMoreSpecificThan returns true if c is more specific than o.
 func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	// nil ResTableConfig is never more specific than any ResTableConfig
 	if c == nil {
@@ -449,11 +476,11 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
-		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_LAYOUTDIR) != 0 {
-			if (c.ScreenLayout & MASK_LAYOUTDIR) == 0 {
+		if ((c.ScreenLayout ^ o.ScreenLayout) & MaskLayoutDir) != 0 {
+			if (c.ScreenLayout & MaskLayoutDir) == 0 {
 				return false
 			}
-			if (o.ScreenLayout & MASK_LAYOUTDIR) == 0 {
+			if (o.ScreenLayout & MaskLayoutDir) == 0 {
 				return true
 			}
 		}
@@ -494,19 +521,19 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
-		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_SCREENSIZE) != 0 {
-			if (c.ScreenLayout & MASK_SCREENSIZE) == 0 {
+		if ((c.ScreenLayout ^ o.ScreenLayout) & MaskScreenSize) != 0 {
+			if (c.ScreenLayout & MaskScreenSize) == 0 {
 				return false
 			}
-			if (o.ScreenLayout & MASK_SCREENSIZE) == 0 {
+			if (o.ScreenLayout & MaskScreenSize) == 0 {
 				return true
 			}
 		}
-		if ((c.ScreenLayout ^ o.ScreenLayout) & MASK_SCREENLONG) != 0 {
-			if (c.ScreenLayout & MASK_SCREENLONG) == 0 {
+		if ((c.ScreenLayout ^ o.ScreenLayout) & MaskScreenLong) != 0 {
+			if (c.ScreenLayout & MaskScreenLong) == 0 {
 				return false
 			}
-			if (o.ScreenLayout & MASK_SCREENLONG) == 0 {
+			if (o.ScreenLayout & MaskScreenLong) == 0 {
 				return true
 			}
 		}
@@ -525,19 +552,19 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	// uimode
 	if c.UIMode != 0 || o.UIMode != 0 {
 		diff := c.UIMode ^ o.UIMode
-		if (diff & MASK_UI_MODE_TYPE) != 0 {
-			if (c.UIMode & MASK_UI_MODE_TYPE) == 0 {
+		if (diff & MaskUIModeType) != 0 {
+			if (c.UIMode & MaskUIModeType) == 0 {
 				return false
 			}
-			if (o.UIMode & MASK_UI_MODE_TYPE) == 0 {
+			if (o.UIMode & MaskUIModeType) == 0 {
 				return true
 			}
 		}
-		if (diff & MASK_UI_MODE_NIGHT) != 0 {
-			if (c.UIMode & MASK_UI_MODE_NIGHT) == 0 {
+		if (diff & MaskUIModeNight) != 0 {
+			if (c.UIMode & MaskUIModeNight) == 0 {
 				return false
 			}
-			if (o.UIMode & MASK_UI_MODE_NIGHT) == 0 {
+			if (o.UIMode & MaskUIModeNight) == 0 {
 				return true
 			}
 		}
@@ -555,8 +582,8 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 
 	// input
 	if c.InputFlags != 0 || o.InputFlags != 0 {
-		myKeysHidden := c.InputFlags & MASK_KEYSHIDDEN
-		oKeysHidden := o.InputFlags & MASK_KEYSHIDDEN
+		myKeysHidden := c.InputFlags & MaskKeysHidden
+		oKeysHidden := o.InputFlags & MaskKeysHidden
 		if (myKeysHidden ^ oKeysHidden) != 0 {
 			if myKeysHidden == 0 {
 				return false
@@ -565,8 +592,8 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 				return true
 			}
 		}
-		myNavHidden := c.InputFlags & MASK_NAVHIDDEN
-		oNavHidden := o.InputFlags & MASK_NAVHIDDEN
+		myNavHidden := c.InputFlags & MaskNavHidden
+		oNavHidden := o.InputFlags & MaskNavHidden
 		if (myNavHidden ^ oNavHidden) != 0 {
 			if myNavHidden == 0 {
 				return false
@@ -637,6 +664,7 @@ func (c *ResTableConfig) IsMoreSpecificThan(o *ResTableConfig) bool {
 	return false
 }
 
+// IsBetterThan returns true if c is better than o for the r configuration.
 func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool {
 	if r == nil {
 		return c.IsMoreSpecificThan(o)
@@ -667,9 +695,9 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
-		myLayoutdir := c.ScreenLayout & MASK_LAYOUTDIR
-		oLayoutdir := o.ScreenLayout & MASK_LAYOUTDIR
-		if (myLayoutdir^oLayoutdir) != 0 && (r.ScreenLayout&MASK_LAYOUTDIR) != 0 {
+		myLayoutdir := c.ScreenLayout & MaskLayoutDir
+		oLayoutdir := o.ScreenLayout & MaskLayoutDir
+		if (myLayoutdir^oLayoutdir) != 0 && (r.ScreenLayout&MaskLayoutDir) != 0 {
 			return myLayoutdir > oLayoutdir
 		}
 	}
@@ -700,17 +728,17 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 
 	// screen layout
 	if c.ScreenLayout != 0 || o.ScreenLayout != 0 {
-		mySL := c.ScreenLayout & MASK_SCREENSIZE
-		oSL := o.ScreenLayout & MASK_SCREENSIZE
-		if (mySL^oSL) != 0 && (r.ScreenLayout&MASK_SCREENSIZE) != 0 {
+		mySL := c.ScreenLayout & MaskScreenSize
+		oSL := o.ScreenLayout & MaskScreenSize
+		if (mySL^oSL) != 0 && (r.ScreenLayout&MaskScreenSize) != 0 {
 			fixedMySL := mySL
 			fixedOSL := oSL
-			if (r.ScreenLayout & MASK_SCREENSIZE) >= SCREENSIZE_NORMAL {
+			if (r.ScreenLayout & MaskScreenSize) >= ScreenSizeNormal {
 				if fixedMySL == 0 {
-					fixedMySL = SCREENSIZE_NORMAL
+					fixedMySL = ScreenSizeNormal
 				}
 				if fixedOSL == 0 {
-					fixedOSL = SCREENSIZE_NORMAL
+					fixedOSL = ScreenSizeNormal
 				}
 			}
 			if fixedMySL == fixedOSL {
@@ -719,9 +747,9 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 			return fixedMySL > fixedOSL
 		}
 
-		if ((c.ScreenLayout^o.ScreenLayout)&MASK_SCREENLONG) != 0 &&
-			(r.ScreenLayout&MASK_SCREENLONG) != 0 {
-			return (c.ScreenLayout & MASK_SCREENLONG) != 0
+		if ((c.ScreenLayout^o.ScreenLayout)&MaskScreenLong) != 0 &&
+			(r.ScreenLayout&MaskScreenLong) != 0 {
+			return (c.ScreenLayout & MaskScreenLong) != 0
 		}
 	}
 
@@ -733,11 +761,11 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	// uimode
 	if c.UIMode != 0 || o.UIMode != 0 {
 		diff := c.UIMode ^ o.UIMode
-		if (diff&MASK_UI_MODE_TYPE) != 0 && (r.UIMode&MASK_UI_MODE_TYPE) != 0 {
-			return (c.UIMode & MASK_UI_MODE_TYPE) != 0
+		if (diff&MaskUIModeType) != 0 && (r.UIMode&MaskUIModeType) != 0 {
+			return (c.UIMode & MaskUIModeType) != 0
 		}
-		if (diff&MASK_UI_MODE_NIGHT) != 0 && (r.UIMode&MASK_UI_MODE_NIGHT) != 0 {
-			return (c.UIMode & MASK_UI_MODE_NIGHT) != 0
+		if (diff&MaskUIModeNight) != 0 && (r.UIMode&MaskUIModeNight) != 0 {
+			return (c.UIMode & MaskUIModeNight) != 0
 		}
 	}
 
@@ -778,9 +806,9 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 
 	// input
 	if c.InputFlags != 0 || o.InputFlags != 0 {
-		myKeysHidden := c.InputFlags & MASK_KEYSHIDDEN
-		oKeysHidden := o.InputFlags & MASK_KEYSHIDDEN
-		reqKeysHidden := r.InputFlags & MASK_KEYSHIDDEN
+		myKeysHidden := c.InputFlags & MaskKeysHidden
+		oKeysHidden := o.InputFlags & MaskKeysHidden
+		reqKeysHidden := r.InputFlags & MaskKeysHidden
 		if myKeysHidden != oKeysHidden && reqKeysHidden != 0 {
 			switch {
 			case myKeysHidden == 0:
@@ -793,9 +821,9 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 				return false
 			}
 		}
-		myNavHidden := c.InputFlags & MASK_NAVHIDDEN
-		oNavHidden := o.InputFlags & MASK_NAVHIDDEN
-		reqNavHidden := r.InputFlags & MASK_NAVHIDDEN
+		myNavHidden := c.InputFlags & MaskNavHidden
+		oNavHidden := o.InputFlags & MaskNavHidden
+		reqNavHidden := r.InputFlags & MaskNavHidden
 		if myNavHidden != oNavHidden && reqNavHidden != 0 {
 			switch {
 			case myNavHidden == 0:
@@ -842,6 +870,9 @@ func (c *ResTableConfig) IsBetterThan(o *ResTableConfig, r *ResTableConfig) bool
 	return false
 }
 
+// IsLocaleMoreSpecificThan a positive integer if this config is more specific than o,
+// a negative integer if |o| is more specific
+// and 0 if they're equally specific.
 func (c *ResTableConfig) IsLocaleMoreSpecificThan(o *ResTableConfig) int {
 	if (c.Language != [2]uint8{} || c.Country != [2]uint8{}) || (o.Language != [2]uint8{} || o.Country != [2]uint8{}) {
 		if c.Language != o.Language {
@@ -865,6 +896,7 @@ func (c *ResTableConfig) IsLocaleMoreSpecificThan(o *ResTableConfig) int {
 	return 0
 }
 
+// IsLocaleBetterThan returns true if c is a better locale match than o for the r configuration.
 func (c *ResTableConfig) IsLocaleBetterThan(o *ResTableConfig, r *ResTableConfig) bool {
 	if r.Language == [2]uint8{} && r.Country == [2]uint8{} {
 		// The request doesn't have a locale, so no resource is better
@@ -900,6 +932,7 @@ func (c *ResTableConfig) IsLocaleBetterThan(o *ResTableConfig, r *ResTableConfig
 	return false
 }
 
+// Match returns true if c can be considered a match for the parameters in settings.
 func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	// nil ResTableConfig always matches.
 	if settings == nil {
@@ -945,33 +978,33 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	}
 
 	// screen layout
-	layoutDir := c.ScreenLayout & MASK_LAYOUTDIR
-	setLayoutDir := settings.ScreenLayout & MASK_LAYOUTDIR
+	layoutDir := c.ScreenLayout & MaskLayoutDir
+	setLayoutDir := settings.ScreenLayout & MaskLayoutDir
 	if layoutDir != 0 && layoutDir != setLayoutDir {
 		return false
 	}
 
-	screenSize := c.ScreenLayout & MASK_SCREENSIZE
-	setScreenSize := settings.ScreenLayout & MASK_SCREENSIZE
+	screenSize := c.ScreenLayout & MaskScreenSize
+	setScreenSize := settings.ScreenLayout & MaskScreenSize
 	if screenSize != 0 && screenSize > setScreenSize {
 		return false
 	}
 
-	screenLong := c.ScreenLayout & MASK_SCREENLONG
-	setScreenLong := settings.ScreenLayout & MASK_SCREENLONG
+	screenLong := c.ScreenLayout & MaskScreenLong
+	setScreenLong := settings.ScreenLayout & MaskScreenLong
 	if screenLong != 0 && screenLong != setScreenLong {
 		return false
 	}
 
 	// ui mode
-	uiModeType := c.UIMode & MASK_UI_MODE_TYPE
-	setUIModeType := settings.UIMode & MASK_UI_MODE_TYPE
+	uiModeType := c.UIMode & MaskUIModeType
+	setUIModeType := settings.UIMode & MaskUIModeType
 	if uiModeType != 0 && uiModeType != setUIModeType {
 		return false
 	}
 
-	uiModeNight := c.UIMode & MASK_UI_MODE_NIGHT
-	setUIModeNight := settings.UIMode & MASK_UI_MODE_NIGHT
+	uiModeNight := c.UIMode & MaskUIModeNight
+	setUIModeNight := settings.UIMode & MaskUIModeNight
 	if uiModeNight != 0 && uiModeNight != setUIModeNight {
 		return false
 	}
@@ -1002,15 +1035,15 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 
 	// input
 	if c.InputFlags != 0 {
-		myKeysHidden := c.InputFlags & MASK_KEYSHIDDEN
-		oKeysHidden := settings.InputFlags & MASK_KEYSHIDDEN
+		myKeysHidden := c.InputFlags & MaskKeysHidden
+		oKeysHidden := settings.InputFlags & MaskKeysHidden
 		if myKeysHidden != 0 && myKeysHidden != oKeysHidden {
-			if myKeysHidden != KEYSHIDDEN_NO || oKeysHidden != KEYSHIDDEN_SOFT {
+			if myKeysHidden != KeysHiddenNo || oKeysHidden != KeysHiddenSoft {
 				return false
 			}
 		}
-		myNavHidden := c.InputFlags & MASK_NAVHIDDEN
-		oNavHidden := settings.InputFlags & MASK_NAVHIDDEN
+		myNavHidden := c.InputFlags & MaskNavHidden
+		oNavHidden := settings.InputFlags & MaskNavHidden
 		if myNavHidden != 0 && myNavHidden != oNavHidden {
 			return false
 		}
@@ -1045,6 +1078,7 @@ func (c *ResTableConfig) Match(settings *ResTableConfig) bool {
 	return true
 }
 
+// Locale returns the locale of the configuration.
 func (c *ResTableConfig) Locale() string {
 	if c.Language[0] == 0 {
 		return ""

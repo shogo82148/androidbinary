@@ -7,91 +7,114 @@ import (
 	"unicode/utf16"
 )
 
+// ChunkType is a type of a resource chunk.
+type ChunkType uint16
+
+// Chunk types.
 const (
-	RES_NULL_TYPE        = 0x0000
-	RES_STRING_POOL_TYPE = 0x0001
-	RES_TABLE_TYPE       = 0x0002
-	RES_XML_TYPE         = 0x0003
+	ResNullChunkType       ChunkType = 0x0000
+	ResStringPoolChunkType ChunkType = 0x0001
+	ResTableChunkType      ChunkType = 0x0002
+	ResXMLChunkType        ChunkType = 0x0003
 
 	// Chunk types in RES_XML_TYPE
-	RES_XML_FIRST_CHUNK_TYPE     = 0x0100
-	RES_XML_START_NAMESPACE_TYPE = 0x0100
-	RES_XML_END_NAMESPACE_TYPE   = 0x0101
-	RES_XML_START_ELEMENT_TYPE   = 0x0102
-	RES_XML_END_ELEMENT_TYPE     = 0x0103
-	RES_XML_CDATA_TYPE           = 0x0104
-	RES_XML_LAST_CHUNK_TYPE      = 0x017f
+	ResXMLFirstChunkType     ChunkType = 0x0100
+	ResXMLStartNamespaceType ChunkType = 0x0100
+	ResXMLEndNamespaceType   ChunkType = 0x0101
+	ResXMLStartElementType   ChunkType = 0x0102
+	ResXMLEndElementType     ChunkType = 0x0103
+	ResXMLCDataType          ChunkType = 0x0104
+	ResXMLLastChunkType      ChunkType = 0x017f
 
 	// This contains a uint32_t array mapping strings in the string
 	// pool back to resource identifiers.  It is optional.
-	RES_XML_RESOURCE_MAP_TYPE = 0x0180
+	ResXMLResourceMapType ChunkType = 0x0180
 
 	// Chunk types in RES_TABLE_TYPE
-	RES_TABLE_PACKAGE_TYPE   = 0x0200
-	RES_TABLE_TYPE_TYPE      = 0x0201
-	RES_TABLE_TYPE_SPEC_TYPE = 0x0202
+	ResTablePackageType  ChunkType = 0x0200
+	ResTableTypeType     ChunkType = 0x0201
+	ResTableTypeSpecType ChunkType = 0x0202
 )
 
+// ResChunkHeader is a header of a resource chunk.
 type ResChunkHeader struct {
-	Type       uint16
+	Type       ChunkType
 	HeaderSize uint16
 	Size       uint32
 }
 
-const SORTED_FLAG = 1 << 0
-const UTF8_FLAG = 1 << 8
+// Flags are flags for string pool header.
+type Flags uint32
 
+// the values of Flags.
+const (
+	SortedFlag Flags = 1 << 0
+	UTF8Flag   Flags = 1 << 8
+)
+
+// ResStringPoolHeader is a chunk header of string pool.
 type ResStringPoolHeader struct {
 	Header      ResChunkHeader
 	StringCount uint32
 	StyleCount  uint32
-	Flags       uint32
+	Flags       Flags
 	StringStart uint32
 	StylesStart uint32
 }
 
+// ResStringPoolSpan is a span of style information associated with
+// a string in the pool.
 type ResStringPoolSpan struct {
 	FirstChar, LastChar uint32
 }
 
+// ResStringPool is a string pool resrouce.
 type ResStringPool struct {
 	Header  ResStringPoolHeader
 	Strings []string
 	Styles  []ResStringPoolSpan
 }
 
+// NilResStringPoolRef is nil reference for string pool.
 const NilResStringPoolRef = ResStringPoolRef(0xFFFFFFFF)
 
+// ResStringPoolRef is a type representing a reference to a string.
 type ResStringPoolRef uint32
 
+// DataType is a type of the data value.
+type DataType uint8
+
+// The constants for DataType
 const (
-	TYPE_NULL            = 0x00
-	TYPE_REFERENCE       = 0x01
-	TYPE_ATTRIBUTE       = 0x02
-	TYPE_STRING          = 0x03
-	TYPE_FLOAT           = 0x04
-	TYPE_DIMENSION       = 0x05
-	TYPE_FRACTION        = 0x06
-	TYPE_FIRST_INT       = 0x10
-	TYPE_INT_DEC         = 0x10
-	TYPE_INT_HEX         = 0x11
-	TYPE_INT_BOOLEAN     = 0x12
-	TYPE_FIRST_COLOR_INT = 0x1c
-	TYPE_INT_COLOR_ARGB8 = 0x1c
-	TYPE_INT_COLOR_RGB8  = 0x1d
-	TYPE_INT_COLOR_ARGB4 = 0x1e
-	TYPE_INT_COLOR_RGB4  = 0x1f
-	TYPE_LAST_COLOR_INT  = 0x1f
-	TYPE_LAST_INT        = 0x1f
+	TypeNull          DataType = 0x00
+	TypeReference     DataType = 0x01
+	TypeAttribute     DataType = 0x02
+	TypeString        DataType = 0x03
+	TypeFloat         DataType = 0x04
+	TypeDemention     DataType = 0x05
+	TypeFraction      DataType = 0x06
+	TypeFirstInt      DataType = 0x10
+	TypeIntDec        DataType = 0x10
+	TypeIntHex        DataType = 0x11
+	TypeIntBoolean    DataType = 0x12
+	TypeFirstColorInt DataType = 0x1c
+	TypeIntColorARGB8 DataType = 0x1c
+	TypeIntColorRGB8  DataType = 0x1d
+	TypeIntColorARGB4 DataType = 0x1e
+	TypeIntColorRGB4  DataType = 0x1f
+	TypeLastColorInt  DataType = 0x1f
+	TypeLastInt       DataType = 0x1f
 )
 
+// ResValue is a representation of a value in a resource
 type ResValue struct {
 	Size     uint16
 	Res0     uint8
-	DataType uint8
+	DataType DataType
 	Data     uint32
 }
 
+// GetString returns a string referenced by ref.
 func (pool *ResStringPool) GetString(ref ResStringPoolRef) string {
 	return pool.Strings[int(ref)]
 }
@@ -119,7 +142,7 @@ func readStringPool(sr *io.SectionReader) (*ResStringPool, error) {
 		if _, err := sr.Seek(int64(sp.Header.StringStart+start), seekStart); err != nil {
 			return nil, err
 		}
-		if (sp.Header.Flags & UTF8_FLAG) == 0 {
+		if (sp.Header.Flags & UTF8Flag) == 0 {
 			str, err = readUTF16(sr)
 		} else {
 			str, err = readUTF8(sr)
