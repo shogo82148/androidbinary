@@ -65,7 +65,7 @@ import (
 func main() {
 	f, _ := os.Open("resources.arsc")
 	rsc, _ := androidbinary.NewTableFile(f)
-	resorce, _ := rsc.GetResource(androidbinary.ResId(0xCAFEBABE), nil)
+	resorce, _ := rsc.GetResource(androidbinary.ResID(0xCAFEBABE), nil)
 	fmt.Println(resource)
 }
 ```
