@@ -13,6 +13,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/shogo82148/androidbinary"
+
+	_ "image/jpeg" // handle jpeg format
+	_ "image/png"  // handle png format
 )
 
 // Apk is an application package file for android.
