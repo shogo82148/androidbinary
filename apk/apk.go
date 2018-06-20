@@ -107,14 +107,23 @@ func (k *Apk) PackageName() string {
 
 // MainAcitivty returns the name of the main activity.
 func (k *Apk) MainAcitivty() (activity string, err error) {
-	for _, act := range k.manifest.App.Activity {
-		for _, intent := range act.IntentFilter {
+	for _, act := range k.manifest.App.Activities {
+		for _, intent := range act.IntentFilters {
 			if intent.Action.Name == "android.intent.action.MAIN" &&
 				intent.Category.Name == "android.intent.category.LAUNCHER" {
 				return act.Name, nil
 			}
 		}
 	}
+	for _, act := range k.manifest.App.ActivityAliases {
+		for _, intent := range act.IntentFilters {
+			if intent.Action.Name == "android.intent.action.MAIN" &&
+				intent.Category.Name == "android.intent.category.LAUNCHER" {
+				return act.TargetActivity, nil
+			}
+		}
+	}
+
 	return "", errors.New("No main activity found")
 }
 
