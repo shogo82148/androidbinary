@@ -56,44 +56,44 @@ func TestNewXMLFile(t *testing.T) {
 		t.Errorf("got %v want no error", err)
 	}
 	expected := &XMLManifest{
-		XMLName:     xml.Name{"", "manifest"},
+		XMLName:     xml.Name{Local: "manifest"},
 		VersionName: "テスト版",
 		VersionCode: "1",
 		Package:     "net.sorablue.shogo.FWMeasure",
 		UsesPermissions: []*XMLUsesPermission{
-			{XMLName: xml.Name{"", "uses-permission"}, Name: "android.permission.CAMERA"},
-			{XMLName: xml.Name{"", "uses-permission"}, Name: "android.permission.WAKE_LOCK"},
-			{XMLName: xml.Name{"", "uses-permission"}, Name: "android.permission.ACCESS_FINE_LOCATION"},
-			{XMLName: xml.Name{"", "uses-permission"}, Name: "android.permission.INTERNET"},
-			{XMLName: xml.Name{"", "uses-permission"}, Name: "android.permission.ACCESS_MOCK_LOCATION"},
-			{XMLName: xml.Name{"", "uses-permission"}, Name: "android.permission.RECORD_AUDIO"},
+			{XMLName: xml.Name{Local: "uses-permission"}, Name: "android.permission.CAMERA"},
+			{XMLName: xml.Name{Local: "uses-permission"}, Name: "android.permission.WAKE_LOCK"},
+			{XMLName: xml.Name{Local: "uses-permission"}, Name: "android.permission.ACCESS_FINE_LOCATION"},
+			{XMLName: xml.Name{Local: "uses-permission"}, Name: "android.permission.INTERNET"},
+			{XMLName: xml.Name{Local: "uses-permission"}, Name: "android.permission.ACCESS_MOCK_LOCATION"},
+			{XMLName: xml.Name{Local: "uses-permission"}, Name: "android.permission.RECORD_AUDIO"},
 		},
 		Applications: []*XMLApplication{
 			{
-				XMLName:    xml.Name{"", "application"},
+				XMLName:    xml.Name{Local: "application"},
 				Label:      "@0x7F040000",
 				Icon:       "@0x7F020000",
 				Debuggable: "false",
 				UsesLibraries: []*XMLUsesLibrary{
-					{XMLName: xml.Name{"", "uses-library"}, Name: "com.google.android.maps"},
+					{XMLName: xml.Name{Local: "uses-library"}, Name: "com.google.android.maps"},
 				},
 				Activities: []*XMLActivity{
 					{
-						XMLName:           xml.Name{"", "activity"},
+						XMLName:           xml.Name{Local: "activity"},
 						ScreenOrientation: "0",
 						Name:              "FWMeasureActivity",
 					},
 					{
-						XMLName:           xml.Name{"", "activity"},
+						XMLName:           xml.Name{Local: "activity"},
 						ScreenOrientation: "0",
 						Name:              "MapActivity",
 					},
 					{
-						XMLName: xml.Name{"", "activity"},
+						XMLName: xml.Name{Local: "activity"},
 						Name:    "SettingActivity",
 					},
 					{
-						XMLName: xml.Name{"", "activity"},
+						XMLName: xml.Name{Local: "activity"},
 						Name:    "PlaceSettingActivity",
 					},
 				},
