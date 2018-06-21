@@ -26,7 +26,7 @@ func ExampleNewXMLFile() {
 
 	// Output:
 	// <Manifest package="net.sorablue.shogo.FWMeasure" versionCode="1" versionName="テスト版">
-	// 	<application allowTaskReparenting="false" allowBackup="false" backupAgent="" debuggable="false" description="" enabled="false" hasCode="false" hardwareAccelerated="false" icon="@0x7F020000" killAfterRestore="false" largeHeap="false" label="@0x7F040000" logo="0" manageSpaceActivity="" name="" permission="" persistent="false" process="" restoreAnyVersion="false" requiredAccountType="" restrictedAccountType="" supportsRtl="false" taskAffinity="" testOnly="false" theme="" uiOptions="" vmSafeMode="false">
+	// 	<application allowTaskReparenting="false" allowBackup="false" backupAgent="" debuggable="false" description="" enabled="false" hasCode="false" hardwareAccelerated="false" icon="@0x7F020000" killAfterRestore="false" largeHeap="false" label="@0x7F040000" logo="" manageSpaceActivity="" name="" permission="" persistent="false" process="" restoreAnyVersion="false" requiredAccountType="" restrictedAccountType="" supportsRtl="false" taskAffinity="" testOnly="false" theme="" uiOptions="" vmSafeMode="false">
 	// 		<activity theme="" name="FWMeasureActivity" label="">
 	// 			<intent-filter>
 	// 				<action name="android.intent.action.MAIN"></action>
