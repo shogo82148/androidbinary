@@ -18,15 +18,15 @@ func TestGetIcon(t *testing.T) {
 
 	label, err := apk.Label(nil)
 	assert.NoError(t, err)
-	assert.Equal(t, label, "HelloWorld")
+	assert.Equal(t, "HelloWorld", label)
 	t.Log("app label:", label)
 
-	assert.Equal(t, apk.PackageName(), "com.example.helloworld")
+	assert.Equal(t, "com.example.helloworld", apk.PackageName())
 
 	manifest := apk.Manifest()
 	assert.Equal(t, manifest.SDK.Target, 24)
 
 	mainActivity, err := apk.MainActivity()
 	assert.NoError(t, err)
-	assert.Equal(t, mainActivity, "com.example.helloworld.MainActivity")
+	assert.Equal(t, "com.example.helloworld.MainActivity", mainActivity)
 }

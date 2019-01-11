@@ -108,20 +108,30 @@ func (k *Apk) PackageName() string {
 	return k.manifest.Package
 }
 
-// MainActivty returns the name of the main activity.
+func isMainIntentFilter(intent ActivityIntentFilter) bool {
+	if intent.Action.Name != "android.intent.action.MAIN" {
+		return false
+	}
+	for _, category := range intent.Categories {
+		if category.Name == "android.intent.category.LAUNCHER" {
+			return true
+		}
+	}
+	return false
+}
+
+// MainActivity returns the name of the main activity.
 func (k *Apk) MainActivity() (activity string, err error) {
 	for _, act := range k.manifest.App.Activities {
 		for _, intent := range act.IntentFilters {
-			if intent.Action.Name == "android.intent.action.MAIN" &&
-				intent.Category.Name == "android.intent.category.LAUNCHER" {
+			if isMainIntentFilter(intent) {
 				return act.Name, nil
 			}
 		}
 	}
 	for _, act := range k.manifest.App.ActivityAliases {
 		for _, intent := range act.IntentFilters {
-			if intent.Action.Name == "android.intent.action.MAIN" &&
-				intent.Category.Name == "android.intent.category.LAUNCHER" {
+			if isMainIntentFilter(intent) {
 				return act.TargetActivity, nil
 			}
 		}
