@@ -20,7 +20,7 @@ type ActivityCategory struct {
 
 // ActivityIntentFilter is an intent filter of an activity.
 type ActivityIntentFilter struct {
-	Action     ActivityAction     `xml:"action"`
+	Actions    []ActivityAction   `xml:"action"`
 	Categories []ActivityCategory `xml:"category"`
 }
 

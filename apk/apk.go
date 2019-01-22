@@ -109,15 +109,24 @@ func (k *Apk) PackageName() string {
 }
 
 func isMainIntentFilter(intent ActivityIntentFilter) bool {
-	if intent.Action.Name != "android.intent.action.MAIN" {
-		return false
-	}
-	for _, category := range intent.Categories {
-		if category.Name == "android.intent.category.LAUNCHER" {
-			return true
+	ok := false
+	for _, action := range intent.Actions {
+		if action.Name == "android.intent.action.MAIN" {
+			ok = true
+			break
 		}
 	}
-	return false
+	if !ok {
+		return false
+	}
+	ok = false
+	for _, category := range intent.Categories {
+		if category.Name == "android.intent.category.LAUNCHER" {
+			ok = true
+			break
+		}
+	}
+	return ok
 }
 
 // MainActivity returns the name of the main activity.
