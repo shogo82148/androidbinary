@@ -40,6 +40,12 @@ type AppActivityAlias struct {
 	IntentFilters  []ActivityIntentFilter `xml:"intent-filter"`
 }
 
+// MetaData is a metadata in an application.
+type MetaData struct {
+	Name  string `xml:"name,attr"`
+	Value string `xml:"value,attr"`
+}
+
 // Application is an application in an APK.
 type Application struct {
 	AllowTaskReparenting  bool               `xml:"allowTaskReparenting,attr"`
@@ -71,6 +77,7 @@ type Application struct {
 	VMSafeMode            bool               `xml:"vmSafeMode,attr"`
 	Activities            []AppActivity      `xml:"activity"`
 	ActivityAliases       []AppActivityAlias `xml:"activity-alias"`
+	MetaData              []MetaData         `xml:"meta-data"`
 }
 
 // UsesSDK is target SDK version.
