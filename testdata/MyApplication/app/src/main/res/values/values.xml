@@ -2,4 +2,6 @@
 <resources>
     <bool name="test_true">true</bool>
     <bool name="test_false">false</bool>
+    
+    <integer name="test">-42</integer>
 </resources>

@@ -8,9 +8,14 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- boolean values -->
         <meta-data android:name="bool_test_true" android:value="true" />
         <meta-data android:name="bool_test_false" android:value="false" />
         <meta-data android:name="bool_test_true_arsc" android:value="@bool/test_true" />
         <meta-data android:name="bool_test_false_arsc" android:value="@bool/test_false" />
+
+        <!-- integer values -->
+        <meta-data android:name="int_test" android:value="42" />
+        <meta-data android:name="int_test_arsc" android:value="@integer/test" />
     </application>
 </manifest>
