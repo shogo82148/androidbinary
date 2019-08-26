@@ -100,6 +100,9 @@ func (v *Bool) UnmarshalXMLAttr(attr xml.Attr) error {
 // Bool returns the boolean value.
 // It resolves the reference if needed.
 func (v Bool) Bool() (bool, error) {
+	if v.value == "" {
+		return false, nil
+	}
 	if !IsResID(v.value) {
 		return strconv.ParseBool(v.value)
 	}
