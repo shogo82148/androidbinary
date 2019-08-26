@@ -120,3 +120,12 @@ func (v Bool) Bool() (bool, error) {
 	}
 	return ret, nil
 }
+
+// MustBool is same as Bool, but it panics if it fails to parse the value.
+func (v Bool) MustBool() bool {
+	ret, err := v.Bool()
+	if err != nil {
+		panic(err)
+	}
+	return ret
+}
