@@ -130,7 +130,7 @@ func (v Bool) MustBool() bool {
 	return ret
 }
 
-// Int32 is a boolean value in XML file.
+// Int32 is an integer value in XML file.
 // It may be an immediate value or a reference.
 type Int32 struct {
 	value  string
@@ -205,6 +205,83 @@ func (v Int32) Int32() (int32, error) {
 // MustInt32 is same as Int32, but it panics if it fails to parse the value.
 func (v Int32) MustInt32() int32 {
 	ret, err := v.Int32()
+	if err != nil {
+		panic(err)
+	}
+	return ret
+}
+
+// String is a boolean value in XML file.
+// It may be an immediate value or a reference.
+type String struct {
+	value  string
+	table  *TableFile
+	config *ResTableConfig
+}
+
+// WithTableFile ties TableFile to the Bool.
+func (v String) WithTableFile(table *TableFile) String {
+	return String{
+		value:  v.value,
+		table:  table,
+		config: v.config,
+	}
+}
+
+// WithResTableConfig ties ResTableConfig to the Bool.
+func (v String) WithResTableConfig(config *ResTableConfig) String {
+	return String{
+		value:  v.value,
+		table:  v.table,
+		config: config,
+	}
+}
+
+func (v *String) inject(table *TableFile, config *ResTableConfig) {
+	v.table = table
+	v.config = config
+}
+
+// SetString sets a string value.
+func (v *String) SetString(value string) {
+	v.value = value
+}
+
+// SetResID sets a boolean value with the resource id.
+func (v *String) SetResID(resID ResID) {
+	v.value = resID.String()
+}
+
+// UnmarshalXMLAttr implements xml.UnmarshalerAttr.
+func (v *String) UnmarshalXMLAttr(attr xml.Attr) error {
+	v.value = attr.Value
+	return nil
+}
+
+// String returns the string value.
+// It resolves the reference if needed.
+func (v String) String() (string, error) {
+	if !IsResID(v.value) {
+		return v.value, nil
+	}
+	id, err := ParseResID(v.value)
+	if err != nil {
+		return "", err
+	}
+	value, err := v.table.GetResource(id, v.config)
+	if err != nil {
+		return "", err
+	}
+	ret, ok := value.(string)
+	if !ok {
+		return "", fmt.Errorf("invalid type: %T", value)
+	}
+	return ret, nil
+}
+
+// MustString is same as String, but it panics if it fails to parse the value.
+func (v String) MustString() string {
+	ret, err := v.String()
 	if err != nil {
 		panic(err)
 	}

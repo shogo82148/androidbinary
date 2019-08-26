@@ -17,5 +17,9 @@
         <!-- integer values -->
         <meta-data android:name="int_test" android:value="42" />
         <meta-data android:name="int_test_arsc" android:value="@integer/test" />
+
+        <!-- string values -->
+        <meta-data android:name="string_test" android:value="hogefuga" />
+        <meta-data android:name="string_test_arsc" android:value="@string/test" />
     </application>
 </manifest>
