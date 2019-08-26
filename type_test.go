@@ -28,12 +28,6 @@ func TestBool(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	decoder := xml.NewDecoder(xmlFile.Reader())
-	xmlManifest := new(myXMLManifest)
-	err = decoder.Decode(xmlManifest)
-	if err != nil {
-		t.Errorf("got %v want no error", err)
-	}
 
 	arscFile, err := os.Open("testdata/MyApplication/resources.arsc")
 	if err != nil {
@@ -44,10 +38,16 @@ func TestBool(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	xmlManifest := new(myXMLManifest)
+	err = xmlFile.Decode(xmlManifest, arsc, nil)
+	if err != nil {
+		t.Errorf("got %v want no error", err)
+	}
+
 	for _, data := range xmlManifest.Application.MetaData {
 		switch data.Name {
 		case "bool_test_true":
-			v, err := data.Value.WithTableFile(arsc).Bool()
+			v, err := data.Value.Bool()
 			if err != nil {
 				t.Error(err)
 			}
@@ -55,7 +55,7 @@ func TestBool(t *testing.T) {
 				t.Errorf("unexpected value: %v", v)
 			}
 		case "bool_test_false":
-			v, err := data.Value.WithTableFile(arsc).Bool()
+			v, err := data.Value.Bool()
 			if err != nil {
 				t.Error(err)
 			}
@@ -63,7 +63,7 @@ func TestBool(t *testing.T) {
 				t.Errorf("unexpected value: %v", v)
 			}
 		case "bool_test_true_arsc":
-			v, err := data.Value.WithTableFile(arsc).Bool()
+			v, err := data.Value.Bool()
 			if err != nil {
 				t.Error(err)
 			}
@@ -71,7 +71,7 @@ func TestBool(t *testing.T) {
 				t.Errorf("unexpected value: %v", v)
 			}
 		case "bool_test_false_arsc":
-			v, err := data.Value.WithTableFile(arsc).Bool()
+			v, err := data.Value.Bool()
 			if err != nil {
 				t.Error(err)
 			}

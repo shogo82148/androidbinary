@@ -3,8 +3,52 @@ package androidbinary
 import (
 	"encoding/xml"
 	"fmt"
+	"reflect"
 	"strconv"
 )
+
+type injector interface {
+	inject(table *TableFile, config *ResTableConfig)
+}
+
+var injectorType = reflect.TypeOf((*injector)(nil)).Elem()
+
+func inject(val reflect.Value, table *TableFile, config *ResTableConfig) {
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return
+		}
+		val = val.Elem()
+	}
+	if val.CanInterface() && val.Type().Implements(injectorType) {
+		val.Interface().(injector).inject(table, config)
+		return
+	}
+	if val.CanAddr() {
+		pv := val.Addr()
+		if pv.CanInterface() && pv.Type().Implements(injectorType) {
+			pv.Interface().(injector).inject(table, config)
+			return
+		}
+	}
+
+	switch val.Kind() {
+	default:
+		// ignore other types
+		return
+	case reflect.Slice, reflect.Array:
+		l := val.Len()
+		for i := 0; i < l; i++ {
+			inject(val.Index(i), table, config)
+		}
+		return
+	case reflect.Struct:
+		l := val.NumField()
+		for i := 0; i < l; i++ {
+			inject(val.Field(i), table, config)
+		}
+	}
+}
 
 // Bool is a boolean value in XML file.
 // It may be an immediate value or a reference.
@@ -30,6 +74,11 @@ func (v Bool) WithResTableConfig(config *ResTableConfig) Bool {
 		table:  v.table,
 		config: config,
 	}
+}
+
+func (v *Bool) inject(table *TableFile, config *ResTableConfig) {
+	v.table = table
+	v.config = config
 }
 
 // SetBool sets a boolean value.
