@@ -97,6 +97,14 @@ func (v *Bool) UnmarshalXMLAttr(attr xml.Attr) error {
 	return nil
 }
 
+// MarshalXMLAttr implements xml.MarshalerAttr.
+func (v Bool) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	return xml.Attr{
+		Name:  name,
+		Value: v.value,
+	}, nil
+}
+
 // Bool returns the boolean value.
 // It resolves the reference if needed.
 func (v Bool) Bool() (bool, error) {
@@ -175,6 +183,14 @@ func (v *Int32) SetResID(resID ResID) {
 func (v *Int32) UnmarshalXMLAttr(attr xml.Attr) error {
 	v.value = attr.Value
 	return nil
+}
+
+// MarshalXMLAttr implements xml.MarshalerAttr.
+func (v Int32) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	return xml.Attr{
+		Name:  name,
+		Value: v.value,
+	}, nil
 }
 
 // Int32 returns the integer value.
@@ -256,6 +272,14 @@ func (v *String) SetResID(resID ResID) {
 func (v *String) UnmarshalXMLAttr(attr xml.Attr) error {
 	v.value = attr.Value
 	return nil
+}
+
+// MarshalXMLAttr implements xml.MarshalerAttr.
+func (v String) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	return xml.Attr{
+		Name:  name,
+		Value: v.value,
+	}, nil
 }
 
 // String returns the string value.
