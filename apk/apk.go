@@ -3,11 +3,9 @@ package apk
 import (
 	"archive/zip"
 	"bytes"
-	"encoding/xml"
 	"fmt"
 	"image"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 
@@ -58,11 +56,11 @@ func OpenZipReader(r io.ReaderAt, size int64) (*Apk, error) {
 	apk := &Apk{
 		zipreader: zipreader,
 	}
-	if err = apk.parseManifest(); err != nil {
-		return nil, errors.Wrap(err, "parse-manifest")
-	}
 	if err = apk.parseResources(); err != nil {
 		return nil, err
+	}
+	if err = apk.parseManifest(); err != nil {
+		return nil, errors.Wrap(err, "parse-manifest")
 	}
 	return apk, nil
 }
@@ -77,7 +75,10 @@ func (k *Apk) Close() error {
 
 // Icon returns the icon image of the APK.
 func (k *Apk) Icon(resConfig *androidbinary.ResTableConfig) (image.Image, error) {
-	iconPath := k.getResource(k.manifest.App.Icon, resConfig)
+	iconPath, err := k.manifest.App.Icon.WithResTableConfig(resConfig).String()
+	if err != nil {
+		return nil, err
+	}
 	if androidbinary.IsResID(iconPath) {
 		return nil, errors.New("unable to convert icon-id to icon path")
 	}
@@ -91,7 +92,10 @@ func (k *Apk) Icon(resConfig *androidbinary.ResTableConfig) (image.Image, error)
 
 // Label returns the label of the APK.
 func (k *Apk) Label(resConfig *androidbinary.ResTableConfig) (s string, err error) {
-	s = k.getResource(k.manifest.App.Label, resConfig)
+	s, err = k.manifest.App.Label.WithResTableConfig(resConfig).String()
+	if err != nil {
+		return
+	}
 	if androidbinary.IsResID(s) {
 		err = errors.New("unable to convert label-id to string")
 	}
@@ -105,13 +109,14 @@ func (k *Apk) Manifest() Manifest {
 
 // PackageName returns the package name of the APK.
 func (k *Apk) PackageName() string {
-	return k.manifest.Package
+	return k.manifest.Package.MustString()
 }
 
 func isMainIntentFilter(intent ActivityIntentFilter) bool {
 	ok := false
 	for _, action := range intent.Actions {
-		if action.Name == "android.intent.action.MAIN" {
+		s, err := action.Name.String()
+		if err == nil && s == "android.intent.action.MAIN" {
 			ok = true
 			break
 		}
@@ -121,7 +126,8 @@ func isMainIntentFilter(intent ActivityIntentFilter) bool {
 	}
 	ok = false
 	for _, category := range intent.Categories {
-		if category.Name == "android.intent.category.LAUNCHER" {
+		s, err := category.Name.String()
+		if err == nil && s == "android.intent.category.LAUNCHER" {
 			ok = true
 			break
 		}
@@ -134,14 +140,14 @@ func (k *Apk) MainActivity() (activity string, err error) {
 	for _, act := range k.manifest.App.Activities {
 		for _, intent := range act.IntentFilters {
 			if isMainIntentFilter(intent) {
-				return act.Name, nil
+				return act.Name.String()
 			}
 		}
 	}
 	for _, act := range k.manifest.App.ActivityAliases {
 		for _, intent := range act.IntentFilters {
 			if isMainIntentFilter(intent) {
-				return act.TargetActivity, nil
+				return act.TargetActivity.String()
 			}
 		}
 	}
@@ -158,12 +164,7 @@ func (k *Apk) parseManifest() error {
 	if err != nil {
 		return errors.Wrap(err, "parse-xml")
 	}
-	reader := xmlfile.Reader()
-	data, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return err
-	}
-	return xml.Unmarshal(data, &k.manifest)
+	return xmlfile.Decode(&k.manifest, k.table, nil)
 }
 
 func (k *Apk) parseResources() (err error) {
@@ -173,18 +174,6 @@ func (k *Apk) parseResources() (err error) {
 	}
 	k.table, err = androidbinary.NewTableFile(bytes.NewReader(resData))
 	return
-}
-
-func (k *Apk) getResource(id string, resConfig *androidbinary.ResTableConfig) string {
-	resID, err := androidbinary.ParseResID(id)
-	if err != nil {
-		return id
-	}
-	val, err := k.table.GetResource(resID, resConfig)
-	if err != nil {
-		return id
-	}
-	return fmt.Sprintf("%s", val)
 }
 
 func (k *Apk) readZipFile(name string) (data []byte, err error) {

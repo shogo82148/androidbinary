@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"reflect"
 )
 
 // XMLFile is an XML file expressed in binary format.
@@ -81,6 +82,17 @@ func NewXMLFile(r io.ReaderAt) (*XMLFile, error) {
 // Reader returns a reader of XML file expressed in text format.
 func (f *XMLFile) Reader() *bytes.Reader {
 	return bytes.NewReader(f.xmlBuffer.Bytes())
+}
+
+// Decode decodes XML file and stores the result in the value pointed to by v.
+// To resolve the resource references, Decode also stores default TableFile and ResTableConfig in the value pointed to by v.
+func (f *XMLFile) Decode(v interface{}, table *TableFile, config *ResTableConfig) error {
+	decoder := xml.NewDecoder(f.Reader())
+	if err := decoder.Decode(v); err != nil {
+		return err
+	}
+	inject(reflect.ValueOf(v), table, config)
+	return nil
 }
 
 func (f *XMLFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error) {
