@@ -68,7 +68,7 @@ type ResStringPoolSpan struct {
 	FirstChar, LastChar uint32
 }
 
-// ResStringPool is a string pool resrouce.
+// ResStringPool is a string pool resource.
 type ResStringPool struct {
 	Header  ResStringPoolHeader
 	Strings []string
@@ -167,7 +167,7 @@ func readStringPool(sr *io.SectionReader) (*ResStringPool, error) {
 }
 
 func readUTF16(sr *io.SectionReader) (string, error) {
-	// read lenth of string
+	// read length of string
 	size, err := readUTF16length(sr)
 	if err != nil {
 		return "", err
