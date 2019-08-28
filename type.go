@@ -99,6 +99,13 @@ func (v *Bool) UnmarshalXMLAttr(attr xml.Attr) error {
 
 // MarshalXMLAttr implements xml.MarshalerAttr.
 func (v Bool) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	if v.value == "" {
+		// return the zero value of bool
+		return xml.Attr{
+			Name:  name,
+			Value: "false",
+		}, nil
+	}
 	return xml.Attr{
 		Name:  name,
 		Value: v.value,
@@ -187,6 +194,13 @@ func (v *Int32) UnmarshalXMLAttr(attr xml.Attr) error {
 
 // MarshalXMLAttr implements xml.MarshalerAttr.
 func (v Int32) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	if v.value == "" {
+		// return the zero value of int32
+		return xml.Attr{
+			Name:  name,
+			Value: "0",
+		}, nil
+	}
 	return xml.Attr{
 		Name:  name,
 		Value: v.value,
