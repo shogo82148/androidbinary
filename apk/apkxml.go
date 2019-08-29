@@ -1,24 +1,28 @@
 package apk
 
+import (
+	"github.com/shogo82148/androidbinary"
+)
+
 // Instrumentation is an application instrumentation code.
 type Instrumentation struct {
-	Name            string `xml:"name,attr"`
-	Target          string `xml:"targetPackage,attr"`
-	HandleProfiling bool   `xml:"handleProfiling,attr"`
-	FunctionalTest  bool   `xml:"functionalTest,attr"`
+	Name            androidbinary.String `xml:"http://schemas.android.com/apk/res/android name,attr"`
+	Target          androidbinary.String `xml:"http://schemas.android.com/apk/res/android targetPackage,attr"`
+	HandleProfiling androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android handleProfiling,attr"`
+	FunctionalTest  androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android functionalTest,attr"`
 }
 
 // ActivityAction is an action of an activity.
 type ActivityAction struct {
-	Name string `xml:"name,attr"`
+	Name androidbinary.String `xml:"http://schemas.android.com/apk/res/android name,attr"`
 }
 
 // ActivityCategory is a category of an activity.
 type ActivityCategory struct {
-	Name string `xml:"name,attr"`
+	Name androidbinary.String `xml:"http://schemas.android.com/apk/res/android name,attr"`
 }
 
-// ActivityIntentFilter is an intent filter of an activity.
+// ActivityIntentFilter is an androidbinary.Int32ent filter of an activity.
 type ActivityIntentFilter struct {
 	Actions    []ActivityAction   `xml:"action"`
 	Categories []ActivityCategory `xml:"category"`
@@ -26,73 +30,73 @@ type ActivityIntentFilter struct {
 
 // AppActivity is an activity in an application.
 type AppActivity struct {
-	Theme         string                 `xml:"theme,attr"`
-	Name          string                 `xml:"name,attr"`
-	Label         string                 `xml:"label,attr"`
+	Theme         androidbinary.String   `xml:"http://schemas.android.com/apk/res/android theme,attr"`
+	Name          androidbinary.String   `xml:"http://schemas.android.com/apk/res/android name,attr"`
+	Label         androidbinary.String   `xml:"http://schemas.android.com/apk/res/android label,attr"`
 	IntentFilters []ActivityIntentFilter `xml:"intent-filter"`
 }
 
 // AppActivityAlias https://developer.android.com/guide/topics/manifest/activity-alias-element
 type AppActivityAlias struct {
-	Name           string                 `xml:"name,attr"`
-	Label          string                 `xml:"label,attr"`
-	TargetActivity string                 `xml:"targetActivity,attr"`
+	Name           androidbinary.String   `xml:"http://schemas.android.com/apk/res/android name,attr"`
+	Label          androidbinary.String   `xml:"http://schemas.android.com/apk/res/android label,attr"`
+	TargetActivity androidbinary.String   `xml:"http://schemas.android.com/apk/res/android targetActivity,attr"`
 	IntentFilters  []ActivityIntentFilter `xml:"intent-filter"`
 }
 
 // MetaData is a metadata in an application.
 type MetaData struct {
-	Name  string `xml:"name,attr"`
-	Value string `xml:"value,attr"`
+	Name  androidbinary.String `xml:"http://schemas.android.com/apk/res/android name,attr"`
+	Value androidbinary.String `xml:"http://schemas.android.com/apk/res/android value,attr"`
 }
 
 // Application is an application in an APK.
 type Application struct {
-	AllowTaskReparenting  bool               `xml:"allowTaskReparenting,attr"`
-	AllowBackup           bool               `xml:"allowBackup,attr"`
-	BackupAgent           string             `xml:"backupAgent,attr"`
-	Debuggable            bool               `xml:"debuggable,attr"`
-	Description           string             `xml:"description,attr"`
-	Enabled               bool               `xml:"enabled,attr"`
-	HasCode               bool               `xml:"hasCode,attr"`
-	HardwareAccelerated   bool               `xml:"hardwareAccelerated,attr"`
-	Icon                  string             `xml:"icon,attr"`
-	KillAfterRestore      bool               `xml:"killAfterRestore,attr"`
-	LargeHeap             bool               `xml:"largeHeap,attr"`
-	Label                 string             `xml:"label,attr"`
-	Logo                  string             `xml:"logo,attr"`
-	ManageSpaceActivity   string             `xml:"manageSpaceActivity,attr"`
-	Name                  string             `xml:"name,attr"`
-	Permission            string             `xml:"permission,attr"`
-	Persistent            bool               `xml:"persistent,attr"`
-	Process               string             `xml:"process,attr"`
-	RestoreAnyVersion     bool               `xml:"restoreAnyVersion,attr"`
-	RequiredAccountType   string             `xml:"requiredAccountType,attr"`
-	RestrictedAccountType string             `xml:"restrictedAccountType,attr"`
-	SupportsRtl           bool               `xml:"supportsRtl,attr"`
-	TaskAffinity          string             `xml:"taskAffinity,attr"`
-	TestOnly              bool               `xml:"testOnly,attr"`
-	Theme                 string             `xml:"theme,attr"`
-	UIOptions             string             `xml:"uiOptions,attr"`
-	VMSafeMode            bool               `xml:"vmSafeMode,attr"`
-	Activities            []AppActivity      `xml:"activity"`
-	ActivityAliases       []AppActivityAlias `xml:"activity-alias"`
-	MetaData              []MetaData         `xml:"meta-data"`
+	AllowTaskReparenting  androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android allowTaskReparenting,attr"`
+	AllowBackup           androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android allowBackup,attr"`
+	BackupAgent           androidbinary.String `xml:"http://schemas.android.com/apk/res/android backupAgent,attr"`
+	Debuggable            androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android debuggable,attr"`
+	Description           androidbinary.String `xml:"http://schemas.android.com/apk/res/android description,attr"`
+	Enabled               androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android enabled,attr"`
+	HasCode               androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android hasCode,attr"`
+	HardwareAccelerated   androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android hardwareAccelerated,attr"`
+	Icon                  androidbinary.String `xml:"http://schemas.android.com/apk/res/android icon,attr"`
+	KillAfterRestore      androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android killAfterRestore,attr"`
+	LargeHeap             androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android largeHeap,attr"`
+	Label                 androidbinary.String `xml:"http://schemas.android.com/apk/res/android label,attr"`
+	Logo                  androidbinary.String `xml:"http://schemas.android.com/apk/res/android logo,attr"`
+	ManageSpaceActivity   androidbinary.String `xml:"http://schemas.android.com/apk/res/android manageSpaceActivity,attr"`
+	Name                  androidbinary.String `xml:"http://schemas.android.com/apk/res/android name,attr"`
+	Permission            androidbinary.String `xml:"http://schemas.android.com/apk/res/android permission,attr"`
+	Persistent            androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android persistent,attr"`
+	Process               androidbinary.String `xml:"http://schemas.android.com/apk/res/android process,attr"`
+	RestoreAnyVersion     androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android restoreAnyVersion,attr"`
+	RequiredAccountType   androidbinary.String `xml:"http://schemas.android.com/apk/res/android requiredAccountType,attr"`
+	RestrictedAccountType androidbinary.String `xml:"http://schemas.android.com/apk/res/android restrictedAccountType,attr"`
+	SupportsRtl           androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android supportsRtl,attr"`
+	TaskAffinity          androidbinary.String `xml:"http://schemas.android.com/apk/res/android taskAffinity,attr"`
+	TestOnly              androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android testOnly,attr"`
+	Theme                 androidbinary.String `xml:"http://schemas.android.com/apk/res/android theme,attr"`
+	UIOptions             androidbinary.String `xml:"http://schemas.android.com/apk/res/android uiOptions,attr"`
+	VMSafeMode            androidbinary.Bool   `xml:"http://schemas.android.com/apk/res/android vmSafeMode,attr"`
+	Activities            []AppActivity        `xml:"activity"`
+	ActivityAliases       []AppActivityAlias   `xml:"activity-alias"`
+	MetaData              []MetaData           `xml:"meta-data"`
 }
 
 // UsesSDK is target SDK version.
 type UsesSDK struct {
-	Min    int `xml:"minSdkVersion,attr"`
-	Target int `xml:"targetSdkVersion,attr"`
-	Max    int `xml:"maxSdkVersion,attr"`
+	Min    androidbinary.Int32 `xml:"http://schemas.android.com/apk/res/android minSdkVersion,attr"`
+	Target androidbinary.Int32 `xml:"http://schemas.android.com/apk/res/android targetSdkVersion,attr"`
+	Max    androidbinary.Int32 `xml:"http://schemas.android.com/apk/res/android maxSdkVersion,attr"`
 }
 
 // Manifest is a manifest of an APK.
 type Manifest struct {
-	Package     string          `xml:"package,attr"`
-	VersionCode int             `xml:"versionCode,attr"`
-	VersionName string          `xml:"versionName,attr"`
-	App         Application     `xml:"application"`
-	Instrument  Instrumentation `xml:"instrumentation"`
-	SDK         UsesSDK         `xml:"uses-sdk"`
+	Package     androidbinary.String `xml:"package,attr"`
+	VersionCode androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android versionCode,attr"`
+	VersionName androidbinary.String `xml:"http://schemas.android.com/apk/res/android versionName,attr"`
+	App         Application          `xml:"application"`
+	Instrument  Instrumentation      `xml:"instrumentation"`
+	SDK         UsesSDK              `xml:"uses-sdk"`
 }

@@ -12,7 +12,7 @@ import (
 // ResID is ID for resources.
 type ResID uint32
 
-// TableFile is a resrouce table file.
+// TableFile is a resource table file.
 type TableFile struct {
 	stringPool    *ResStringPool
 	tablePackages map[uint32]*TablePackage
@@ -167,7 +167,7 @@ type ResTableEntry struct {
 	Key   ResStringPoolRef
 }
 
-// TableEntry is a entry in a recource table.
+// TableEntry is a entry in a resource table.
 type TableEntry struct {
 	Key   *ResTableEntry
 	Value *ResValue
@@ -268,7 +268,7 @@ func (p *TablePackage) findEntry(typeIndex, entryIndex int, config *ResTableConf
 	return best.Entries[entryIndex]
 }
 
-// GetResource returns a resrouce referenced by id.
+// GetResource returns a resource referenced by id.
 func (f *TableFile) GetResource(id ResID, config *ResTableConfig) (interface{}, error) {
 	p := f.findPackage(id.Package())
 	if p == nil {

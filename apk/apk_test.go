@@ -27,7 +27,7 @@ func TestParseAPKFile(t *testing.T) {
 	assert.Equal(t, "com.example.helloworld", apk.PackageName())
 
 	manifest := apk.Manifest()
-	assert.Equal(t, manifest.SDK.Target, 24)
+	assert.Equal(t, manifest.SDK.Target.MustInt32(), int32(24))
 
 	mainActivity, err := apk.MainActivity()
 	assert.NoError(t, err)
