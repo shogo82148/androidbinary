@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/pkg/errors"
 	"github.com/shogo82148/androidbinary"
 
 	_ "image/jpeg" // handle jpeg format
@@ -60,7 +59,7 @@ func OpenZipReader(r io.ReaderAt, size int64) (*Apk, error) {
 		return nil, err
 	}
 	if err = apk.parseManifest(); err != nil {
-		return nil, errors.Wrap(err, "parse-manifest")
+		return nil, errorf("parse-manifest: %w", err)
 	}
 	return apk, nil
 }
@@ -80,7 +79,7 @@ func (k *Apk) Icon(resConfig *androidbinary.ResTableConfig) (image.Image, error)
 		return nil, err
 	}
 	if androidbinary.IsResID(iconPath) {
-		return nil, errors.New("unable to convert icon-id to icon path")
+		return nil, newError("unable to convert icon-id to icon path")
 	}
 	imgData, err := k.readZipFile(iconPath)
 	if err != nil {
@@ -97,7 +96,7 @@ func (k *Apk) Label(resConfig *androidbinary.ResTableConfig) (s string, err erro
 		return
 	}
 	if androidbinary.IsResID(s) {
-		err = errors.New("unable to convert label-id to string")
+		err = newError("unable to convert label-id to string")
 	}
 	return
 }
@@ -152,17 +151,17 @@ func (k *Apk) MainActivity() (activity string, err error) {
 		}
 	}
 
-	return "", errors.New("No main activity found")
+	return "", newError("No main activity found")
 }
 
 func (k *Apk) parseManifest() error {
 	xmlData, err := k.readZipFile("AndroidManifest.xml")
 	if err != nil {
-		return errors.Wrap(err, "read-manifest.xml")
+		return errorf("failed to read AndroidManifest.xml: %w", err)
 	}
 	xmlfile, err := androidbinary.NewXMLFile(bytes.NewReader(xmlData))
 	if err != nil {
-		return errors.Wrap(err, "parse-xml")
+		return errorf("failed to parse AndroidManifest.xml: %w", err)
 	}
 	return xmlfile.Decode(&k.manifest, k.table, nil)
 }
