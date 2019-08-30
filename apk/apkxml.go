@@ -30,10 +30,11 @@ type ActivityIntentFilter struct {
 
 // AppActivity is an activity in an application.
 type AppActivity struct {
-	Theme         androidbinary.String   `xml:"http://schemas.android.com/apk/res/android theme,attr"`
-	Name          androidbinary.String   `xml:"http://schemas.android.com/apk/res/android name,attr"`
-	Label         androidbinary.String   `xml:"http://schemas.android.com/apk/res/android label,attr"`
-	IntentFilters []ActivityIntentFilter `xml:"intent-filter"`
+	Theme             androidbinary.String   `xml:"http://schemas.android.com/apk/res/android theme,attr"`
+	Name              androidbinary.String   `xml:"http://schemas.android.com/apk/res/android name,attr"`
+	Label             androidbinary.String   `xml:"http://schemas.android.com/apk/res/android label,attr"`
+	ScreenOrientation androidbinary.String   `xml:"http://schemas.android.com/apk/res/android screenOrientation,attr"`
+	IntentFilters     []ActivityIntentFilter `xml:"intent-filter"`
 }
 
 // AppActivityAlias https://developer.android.com/guide/topics/manifest/activity-alias-element
