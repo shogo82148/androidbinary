@@ -1,7 +1,7 @@
 androidbinary
 =====
 
-[![Build Status](https://github.com/shogo82148/androidbinary/workflows/Test/badge.svg)](https://github.com/shogo82148/gandroidbinary/actions)
+[![Build Status](https://github.com/shogo82148/androidbinary/workflows/Test/badge.svg)](https://github.com/shogo82148/androidbinary/actions)
 [![GoDoc](https://godoc.org/github.com/shogo82148/androidbinary?status.svg)](https://godoc.org/github.com/shogo82148/androidbinary)
 
 Android binary file parser
