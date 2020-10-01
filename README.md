@@ -23,6 +23,11 @@ func main() {
 
 	icon, _ := pkg.Icon(nil) // returns the icon of APK as image.Image
 	pkgName := pkg.PackageName() // returns the package name
+
+	resConfigEN := &androidbinary.ResTableConfig{
+		Language: [2]uint8{uint8('e'), uint8('n')},
+	}
+	appLabel, _ = pkg.Label(resConfigEN) // get app label for en translation
 }
 ```
 
