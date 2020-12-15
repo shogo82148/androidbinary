@@ -92,12 +92,19 @@ type UsesSDK struct {
 	Max    androidbinary.Int32 `xml:"http://schemas.android.com/apk/res/android maxSdkVersion,attr"`
 }
 
+// UsesPermission is user grant the system permission.
+type UsesPermission struct {
+	Name androidbinary.String `xml:"http://schemas.android.com/apk/res/android name,attr"`
+	Max  androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android maxSdkVersion,attr"`
+}
+
 // Manifest is a manifest of an APK.
 type Manifest struct {
-	Package     androidbinary.String `xml:"package,attr"`
-	VersionCode androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android versionCode,attr"`
-	VersionName androidbinary.String `xml:"http://schemas.android.com/apk/res/android versionName,attr"`
-	App         Application          `xml:"application"`
-	Instrument  Instrumentation      `xml:"instrumentation"`
-	SDK         UsesSDK              `xml:"uses-sdk"`
+	Package         androidbinary.String `xml:"package,attr"`
+	VersionCode     androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android versionCode,attr"`
+	VersionName     androidbinary.String `xml:"http://schemas.android.com/apk/res/android versionName,attr"`
+	App             Application          `xml:"application"`
+	Instrument      Instrumentation      `xml:"instrumentation"`
+	SDK             UsesSDK              `xml:"uses-sdk"`
+	UsesPermissions []UsesPermission     `xml:"uses-permission"`
 }
