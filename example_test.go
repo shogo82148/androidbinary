@@ -39,6 +39,12 @@ func ExampleNewXMLFile() {
 	// 	</application>
 	// 	<instrumentation android:name="" android:targetPackage="" android:handleProfiling="false" android:functionalTest="false"></instrumentation>
 	// 	<uses-sdk android:minSdkVersion="0" android:targetSdkVersion="0" android:maxSdkVersion="0"></uses-sdk>
+	// 	<uses-permission android:name="android.permission.CAMERA" android:maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission android:name="android.permission.WAKE_LOCK" android:maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission android:name="android.permission.INTERNET" android:maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" android:maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission android:name="android.permission.RECORD_AUDIO" android:maxSdkVersion="0"></uses-permission>
 	// </Manifest>
 }
 
