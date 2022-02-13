@@ -125,8 +125,8 @@ func TestReadStartNamespace(t *testing.T) {
 	if f.notPrecessedNS[ResStringPoolRef(1)] != ResStringPoolRef(2) {
 		t.Errorf("got %v want %v", f.notPrecessedNS[ResStringPoolRef(1)], ResStringPoolRef(2))
 	}
-	if f.namespaces[ResStringPoolRef(1)] != ResStringPoolRef(2) {
-		t.Errorf("got %v want %v", f.namespaces[ResStringPoolRef(1)], ResStringPoolRef(2))
+	if f.namespaces.get(ResStringPoolRef(1)) != ResStringPoolRef(2) {
+		t.Errorf("got %v want %v", f.namespaces.get(ResStringPoolRef(1)), ResStringPoolRef(2))
 	}
 }
 
@@ -144,15 +144,11 @@ func TestReadEndNamespace(t *testing.T) {
 	sr := io.NewSectionReader(buf, 0, int64(len(input)))
 
 	f := new(XMLFile)
-	f.namespaces = make(map[ResStringPoolRef]ResStringPoolRef)
-	f.namespaces[ResStringPoolRef(1)] = ResStringPoolRef(2)
+	f.namespaces.add(ResStringPoolRef(1), ResStringPoolRef(2))
 	err := f.readEndNamespace(sr)
 
 	if err != nil {
 		t.Errorf("got %v want no error", err)
-	}
-	if _, ok := f.namespaces[ResStringPoolRef(1)]; ok {
-		t.Errorf("got %v want not empty", f.namespaces[ResStringPoolRef(1)])
 	}
 }
 
@@ -162,8 +158,7 @@ func TestAddNamespacePrefix(t *testing.T) {
 	uriRef := ResStringPoolRef(3)
 
 	f := new(XMLFile)
-	f.namespaces = make(map[ResStringPoolRef]ResStringPoolRef)
-	f.namespaces[uriRef] = prefixRef
+	f.namespaces.add(uriRef, prefixRef)
 	f.stringPool = new(ResStringPool)
 	f.stringPool.Strings = []string{"", "name", "prefix", "http://example.com"}
 
@@ -210,8 +205,7 @@ func TestReadStartElement(t *testing.T) {
 	f := new(XMLFile)
 	f.notPrecessedNS = make(map[ResStringPoolRef]ResStringPoolRef)
 	f.notPrecessedNS[uriRef] = prefixRef
-	f.namespaces = make(map[ResStringPoolRef]ResStringPoolRef)
-	f.namespaces[uriRef] = prefixRef
+	f.namespaces.add(uriRef, prefixRef)
 	f.stringPool = new(ResStringPool)
 	f.stringPool.Strings = []string{"", "name", "prefix", "http://example.com", "attr", "value"}
 	err := f.readStartElement(sr)

@@ -14,8 +14,43 @@ type XMLFile struct {
 	stringPool     *ResStringPool
 	resourceMap    []uint32
 	notPrecessedNS map[ResStringPoolRef]ResStringPoolRef
-	namespaces     map[ResStringPoolRef]ResStringPoolRef
+	namespaces     XmlNamespaces
 	xmlBuffer      bytes.Buffer
+}
+
+type (
+	XmlNamespaces struct {
+		l []namespaceVal
+	}
+	namespaceVal struct {
+		key   ResStringPoolRef
+		value ResStringPoolRef
+	}
+)
+
+func (x *XmlNamespaces) add(key ResStringPoolRef, value ResStringPoolRef) {
+	x.l = append(x.l, namespaceVal{key: key, value: value})
+	return
+}
+
+func (x *XmlNamespaces) remove(key ResStringPoolRef) {
+	for i := len(x.l) - 1; i >= 0; i-- {
+		if x.l[i].key == key {
+			var newList = append(x.l[:i], x.l[i+1:]...)
+			x.l = newList
+			return
+		}
+	}
+	return
+}
+
+func (x *XmlNamespaces) get(key ResStringPoolRef) ResStringPoolRef {
+	for i := len(x.l) - 1; i >= 0; i-- {
+		if x.l[i].key == key {
+			return x.l[i].value
+		}
+	}
+	return ResStringPoolRef(0)
 }
 
 // ResXMLTreeNode is basic XML tree node.
@@ -151,12 +186,7 @@ func (f *XMLFile) readStartNamespace(sr *io.SectionReader) error {
 		f.notPrecessedNS = make(map[ResStringPoolRef]ResStringPoolRef)
 	}
 	f.notPrecessedNS[namespace.URI] = namespace.Prefix
-
-	if f.namespaces == nil {
-		f.namespaces = make(map[ResStringPoolRef]ResStringPoolRef)
-	}
-	f.namespaces[namespace.URI] = namespace.Prefix
-
+	f.namespaces.add(namespace.URI, namespace.Prefix)
 	return nil
 }
 
@@ -173,13 +203,13 @@ func (f *XMLFile) readEndNamespace(sr *io.SectionReader) error {
 	if err := binary.Read(sr, binary.LittleEndian, namespace); err != nil {
 		return err
 	}
-	delete(f.namespaces, namespace.URI)
+	f.namespaces.remove(namespace.URI)
 	return nil
 }
 
 func (f *XMLFile) addNamespacePrefix(ns, name ResStringPoolRef) string {
 	if ns != NilResStringPoolRef {
-		prefix := f.GetString(f.namespaces[ns])
+		prefix := f.GetString(f.namespaces.get(ns))
 		return fmt.Sprintf("%s:%s", prefix, f.GetString(name))
 	}
 	return f.GetString(name)
