@@ -14,12 +14,12 @@ type XMLFile struct {
 	stringPool     *ResStringPool
 	resourceMap    []uint32
 	notPrecessedNS map[ResStringPoolRef]ResStringPoolRef
-	namespaces     XmlNamespaces
+	namespaces     xmlNamespaces
 	xmlBuffer      bytes.Buffer
 }
 
 type (
-	XmlNamespaces struct {
+	xmlNamespaces struct {
 		l []namespaceVal
 	}
 	namespaceVal struct {
@@ -28,12 +28,12 @@ type (
 	}
 )
 
-func (x *XmlNamespaces) add(key ResStringPoolRef, value ResStringPoolRef) {
+func (x *xmlNamespaces) add(key ResStringPoolRef, value ResStringPoolRef) {
 	x.l = append(x.l, namespaceVal{key: key, value: value})
 	return
 }
 
-func (x *XmlNamespaces) remove(key ResStringPoolRef) {
+func (x *xmlNamespaces) remove(key ResStringPoolRef) {
 	for i := len(x.l) - 1; i >= 0; i-- {
 		if x.l[i].key == key {
 			var newList = append(x.l[:i], x.l[i+1:]...)
@@ -44,7 +44,7 @@ func (x *XmlNamespaces) remove(key ResStringPoolRef) {
 	return
 }
 
-func (x *XmlNamespaces) get(key ResStringPoolRef) ResStringPoolRef {
+func (x *xmlNamespaces) get(key ResStringPoolRef) ResStringPoolRef {
 	for i := len(x.l) - 1; i >= 0; i-- {
 		if x.l[i].key == key {
 			return x.l[i].value
