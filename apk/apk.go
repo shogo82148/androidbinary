@@ -7,7 +7,6 @@ import (
 	"image"
 	"io"
 	"os"
-	"strconv"
 
 	"github.com/shogo82148/androidbinary"
 
@@ -193,5 +192,5 @@ func (k *Apk) readZipFile(name string) (data []byte, err error) {
 		}
 		return buf.Bytes(), nil
 	}
-	return nil, fmt.Errorf("File %s not found", strconv.Quote(name))
+	return nil, fmt.Errorf("apk: file %q not found", name)
 }
