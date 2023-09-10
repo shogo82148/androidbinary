@@ -162,12 +162,20 @@ func TestAddNamespacePrefix(t *testing.T) {
 	f.stringPool = new(ResStringPool)
 	f.stringPool.Strings = []string{"", "name", "prefix", "http://example.com"}
 
-	if actual := f.addNamespacePrefix(NilResStringPoolRef, nameRef); actual != "name" {
-		t.Errorf("got %v want name", actual)
+	got, err := f.addNamespacePrefix(NilResStringPoolRef, nameRef)
+	if err != nil {
+		t.Errorf("got %v want no error", err)
+	}
+	if got != "name" {
+		t.Errorf("got %v want name", got)
 	}
 
-	if actual := f.addNamespacePrefix(uriRef, nameRef); actual != "prefix:name" {
-		t.Errorf("got %v want prefix:name", actual)
+	got, err = f.addNamespacePrefix(uriRef, nameRef)
+	if err != nil {
+		t.Errorf("got %v want no error", err)
+	}
+	if got != "prefix:name" {
+		t.Errorf("got %v want prefix:name", got)
 	}
 }
 

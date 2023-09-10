@@ -115,8 +115,14 @@ type ResValue struct {
 }
 
 // GetString returns a string referenced by ref.
+// It panics if the pool doesn't contain ref.
 func (pool *ResStringPool) GetString(ref ResStringPoolRef) string {
 	return pool.Strings[int(ref)]
+}
+
+// HasString returns whether the pool contains ref.
+func (pool *ResStringPool) HasString(ref ResStringPoolRef) bool {
+	return int(ref) >= 0 && int(ref) < len(pool.Strings)
 }
 
 func readStringPool(sr *io.SectionReader) (*ResStringPool, error) {
