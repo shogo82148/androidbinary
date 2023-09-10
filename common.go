@@ -122,6 +122,9 @@ func (pool *ResStringPool) GetString(ref ResStringPoolRef) string {
 
 // HasString returns whether the pool contains ref.
 func (pool *ResStringPool) HasString(ref ResStringPoolRef) bool {
+	if pool == nil {
+		return false
+	}
 	return int(ref) >= 0 && int(ref) < len(pool.Strings)
 }
 
