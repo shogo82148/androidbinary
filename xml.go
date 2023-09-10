@@ -144,6 +144,12 @@ func (f *XMLFile) readChunk(r io.ReaderAt, offset int64) (*ResChunkHeader, error
 	if err := binary.Read(sr, binary.LittleEndian, chunkHeader); err != nil {
 		return nil, err
 	}
+	if chunkHeader.HeaderSize < uint16(binary.Size(chunkHeader)) {
+		return nil, fmt.Errorf("androidbinary: invalid chunk header size: %d", chunkHeader.HeaderSize)
+	}
+	if chunkHeader.Size < uint32(chunkHeader.HeaderSize) {
+		return nil, fmt.Errorf("androidbinary: invalid chunk size: %d", chunkHeader.Size)
+	}
 
 	var err error
 	if _, err := sr.Seek(0, io.SeekStart); err != nil {
