@@ -267,6 +267,12 @@ func (f *XMLFile) readStartElement(sr *io.SectionReader) error {
 	// output XML namespaces
 	if f.notPrecessedNS != nil {
 		for uri, prefix := range f.notPrecessedNS {
+			if !f.HasString(uri) {
+				return &InvalidReferenceError{Ref: uri}
+			}
+			if !f.HasString(prefix) {
+				return &InvalidReferenceError{Ref: prefix}
+			}
 			fmt.Fprintf(&f.xmlBuffer, " xmlns:%s=\"", f.GetString(prefix))
 			xml.Escape(&f.xmlBuffer, []byte(f.GetString(uri)))
 			fmt.Fprint(&f.xmlBuffer, "\"")
@@ -285,6 +291,9 @@ func (f *XMLFile) readStartElement(sr *io.SectionReader) error {
 
 		var value string
 		if attr.RawValue != NilResStringPoolRef {
+			if !f.HasString(attr.RawValue) {
+				return &InvalidReferenceError{Ref: attr.RawValue}
+			}
 			value = f.GetString(attr.RawValue)
 		} else {
 			data := attr.TypedValue.Data
