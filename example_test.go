@@ -25,26 +25,26 @@ func ExampleNewXMLFile() {
 	enc.Encode(v)
 
 	// Output:
-	// 	<Manifest package="net.sorablue.shogo.FWMeasure" xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1" android:versionName="テスト版">
-	// 	<application android:allowTaskReparenting="false" android:allowBackup="false" android:backupAgent="" android:debuggable="false" android:description="" android:enabled="false" android:hasCode="false" android:hardwareAccelerated="false" android:icon="@0x7F020000" android:killAfterRestore="false" android:largeHeap="false" android:label="@0x7F040000" android:logo="" android:manageSpaceActivity="" android:name="" android:permission="" android:persistent="false" android:process="" android:restoreAnyVersion="false" android:requiredAccountType="" android:restrictedAccountType="" android:supportsRtl="false" android:taskAffinity="" android:testOnly="false" android:theme="" android:uiOptions="" android:vmSafeMode="false">
-	// 		<activity android:theme="" android:name="FWMeasureActivity" android:label="" android:screenOrientation="0">
+	// <Manifest package="net.sorablue.shogo.FWMeasure" versionCode="1" versionName="テスト版">
+	// 	<application allowTaskReparenting="false" allowBackup="false" backupAgent="" debuggable="false" description="" enabled="false" hasCode="false" hardwareAccelerated="false" icon="@0x7F020000" killAfterRestore="false" largeHeap="false" label="@0x7F040000" logo="" manageSpaceActivity="" name="" permission="" persistent="false" process="" restoreAnyVersion="false" requiredAccountType="" restrictedAccountType="" supportsRtl="false" taskAffinity="" testOnly="false" theme="" uiOptions="" vmSafeMode="false">
+	// 		<activity theme="" name="FWMeasureActivity" label="" screenOrientation="0">
 	// 			<intent-filter>
-	// 				<action android:name="android.intent.action.MAIN"></action>
-	// 				<category android:name="android.intent.category.LAUNCHER"></category>
+	// 				<action name="android.intent.action.MAIN"></action>
+	// 				<category name="android.intent.category.LAUNCHER"></category>
 	// 			</intent-filter>
 	// 		</activity>
-	// 		<activity android:theme="" android:name="MapActivity" android:label="" android:screenOrientation="0"></activity>
-	// 		<activity android:theme="" android:name="SettingActivity" android:label="" android:screenOrientation=""></activity>
-	// 		<activity android:theme="" android:name="PlaceSettingActivity" android:label="" android:screenOrientation=""></activity>
+	// 		<activity theme="" name="MapActivity" label="" screenOrientation="0"></activity>
+	// 		<activity theme="" name="SettingActivity" label="" screenOrientation=""></activity>
+	// 		<activity theme="" name="PlaceSettingActivity" label="" screenOrientation=""></activity>
 	// 	</application>
-	// 	<instrumentation android:name="" android:targetPackage="" android:handleProfiling="false" android:functionalTest="false"></instrumentation>
-	// 	<uses-sdk android:minSdkVersion="0" android:targetSdkVersion="0" android:maxSdkVersion="0"></uses-sdk>
-	// 	<uses-permission android:name="android.permission.CAMERA" android:maxSdkVersion="0"></uses-permission>
-	// 	<uses-permission android:name="android.permission.WAKE_LOCK" android:maxSdkVersion="0"></uses-permission>
-	// 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="0"></uses-permission>
-	// 	<uses-permission android:name="android.permission.INTERNET" android:maxSdkVersion="0"></uses-permission>
-	// 	<uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" android:maxSdkVersion="0"></uses-permission>
-	// 	<uses-permission android:name="android.permission.RECORD_AUDIO" android:maxSdkVersion="0"></uses-permission>
+	// 	<instrumentation name="" targetPackage="" handleProfiling="false" functionalTest="false"></instrumentation>
+	// 	<uses-sdk minSdkVersion="0" targetSdkVersion="0" maxSdkVersion="0"></uses-sdk>
+	// 	<uses-permission name="android.permission.CAMERA" maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission name="android.permission.WAKE_LOCK" maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission name="android.permission.ACCESS_FINE_LOCATION" maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission name="android.permission.INTERNET" maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission name="android.permission.ACCESS_MOCK_LOCATION" maxSdkVersion="0"></uses-permission>
+	// 	<uses-permission name="android.permission.RECORD_AUDIO" maxSdkVersion="0"></uses-permission>
 	// </Manifest>
 }
 
