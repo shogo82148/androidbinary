@@ -102,7 +102,7 @@ type UsesPermission struct {
 type Manifest struct {
 	Package                   androidbinary.String `xml:"package,attr"`
 	CompileSDKVersion         androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android compileSdkVersion,attr"`
-	CompileSDKVersionCodename androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android compileSdkVersionCodename,attr"`
+	CompileSDKVersionCodename androidbinary.String `xml:"http://schemas.android.com/apk/res/android compileSdkVersionCodename,attr"`
 	VersionCode               androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android versionCode,attr"`
 	VersionName               androidbinary.String `xml:"http://schemas.android.com/apk/res/android versionName,attr"`
 	App                       Application          `xml:"application"`
