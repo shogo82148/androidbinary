@@ -100,11 +100,13 @@ type UsesPermission struct {
 
 // Manifest is a manifest of an APK.
 type Manifest struct {
-	Package         androidbinary.String `xml:"package,attr"`
-	VersionCode     androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android versionCode,attr"`
-	VersionName     androidbinary.String `xml:"http://schemas.android.com/apk/res/android versionName,attr"`
-	App             Application          `xml:"application"`
-	Instrument      Instrumentation      `xml:"instrumentation"`
-	SDK             UsesSDK              `xml:"uses-sdk"`
-	UsesPermissions []UsesPermission     `xml:"uses-permission"`
+	Package                   androidbinary.String `xml:"package,attr"`
+	CompileSDKVersion         androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android compileSdkVersion,attr"`
+	CompileSDKVersionCodename androidbinary.String `xml:"http://schemas.android.com/apk/res/android compileSdkVersionCodename,attr"`
+	VersionCode               androidbinary.Int32  `xml:"http://schemas.android.com/apk/res/android versionCode,attr"`
+	VersionName               androidbinary.String `xml:"http://schemas.android.com/apk/res/android versionName,attr"`
+	App                       Application          `xml:"application"`
+	Instrument                Instrumentation      `xml:"instrumentation"`
+	SDK                       UsesSDK              `xml:"uses-sdk"`
+	UsesPermissions           []UsesPermission     `xml:"uses-permission"`
 }
