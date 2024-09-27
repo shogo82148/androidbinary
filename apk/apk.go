@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/shogo82148/androidbinary"
+	_ "golang.org/x/image/webp"
 
 	_ "image/jpeg" // handle jpeg format
 	_ "image/png"  // handle png format
