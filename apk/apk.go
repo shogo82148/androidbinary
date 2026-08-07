@@ -180,16 +180,23 @@ func (k *Apk) readZipFile(name string) (data []byte, err error) {
 		if file.Name != name {
 			continue
 		}
-		rc, er := file.Open()
-		if er != nil {
-			err = er
+
+		localFun := func() error {
+			rc, e := file.Open()
+			if e != nil {
+				return e
+			}
+			defer rc.Close()
+			if _, e = io.Copy(buf, rc); e != nil {
+				return e
+			}
+			return nil
+		}
+
+		if err = localFun(); err != nil {
 			return
 		}
-		defer rc.Close()
-		_, err = io.Copy(buf, rc)
-		if err != nil {
-			return
-		}
+
 		return buf.Bytes(), nil
 	}
 	return nil, fmt.Errorf("apk: file %q not found", name)
