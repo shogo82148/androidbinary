@@ -18,7 +18,7 @@ jobs:
         with:
           go-version: "stable"
       - id: list
-        uses: shogo82148/actions-go-fuzz/list@7887fe2495518ecf2504c6ebdede1764dec11018 # v1.2.3
+        uses: shogo82148/actions-go-fuzz/list@2caf0a4e74459a82e94234a021500539451f0e00 # v1.2.4
     outputs:
       fuzz-tests: ${{steps.list.outputs.fuzz-tests}}
 
