@@ -14,3 +14,6 @@ updates:
       codeql-actions:
         patterns:
           - "github/codeql-action/*"
+      actions-go-fuzz:
+        patterns:
+          - "shogo82148/actions-go-fuzz/*"
